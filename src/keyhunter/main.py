@@ -7,7 +7,6 @@ from textual.widgets import ContentSwitcher, Footer
 from keyhunter.settings.schemas import AppSettings
 from keyhunter.settings.service import SettingsService
 from keyhunter.settings.widgets import Settings
-
 from keyhunter.statistic.widgets import TypingStatistic
 from keyhunter.typer.typer import Typer
 
@@ -30,7 +29,7 @@ class KeyHunter(App):
     def compose(self) -> ComposeResult:
         with ContentSwitcher(initial="typer-container"):
             yield CenterMiddle(
-                Typer(settings=self.settings.typer, id="typer"), id="typer-container"
+                Typer(settings=self.settings, id="typer"), id="typer-container"
             )
             yield VerticalScroll(
                 Settings(id="settings"), id="settings-container", classes="settings"

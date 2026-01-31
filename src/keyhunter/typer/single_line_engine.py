@@ -1,7 +1,6 @@
 from rich.segment import Segment
 from rich.style import Style
 from textual import events
-from textual.geometry import Size
 from textual.strip import Strip
 from textual.theme import Theme
 
@@ -20,10 +19,38 @@ class SingleLineEngine:
         self._current_segment_idx = 0
         self.enable_pre_content_space: bool = settings.enable_pre_content_space
         self._width = settings.width
+        self._height = settings.height
+
         self._pre_content_space = (
             (settings.width // 2) if settings.enable_pre_content_space else 0
         )
         self._settings = settings
+
+    @property
+    def width(self) -> int:
+        return self._width
+
+    @width.setter
+    def width(self, new_width: int) -> None:
+        if new_width > self._settings.max_width:
+            self._width = self._settings.max_width
+        elif new_width < self._settings.min_width:
+            self._width = self._settings.min_width
+        else:
+            self._width = new_width
+
+    @property
+    def height(self) -> int:
+        return self._height
+
+    @height.setter
+    def height(self, new_height: int) -> None:
+        if new_height > self._settings.max_height:
+            self._height = self._settings.max_height
+        elif new_height < self._settings.min_height:
+            self._height = self._settings.min_height
+        else:
+            self._height = new_height
 
     @property
     def _current_segment(self) -> Segment:
@@ -104,14 +131,9 @@ class SingleLineEngine:
         self._current_segment_idx = self._pre_content_space
         self._update_current_segment(self.next_char_style)
 
-    def resize(self, container_size: Size) -> None:
-        if container_size.width < self._settings.width:
-            raise ValueError(
-                f"Container size less than typer width: {container_size.width} < {self._settings.width}"
-            )
-
+    def resize(self) -> None:
         if self._settings.enable_pre_content_space:
-            before_center = self._settings.width // 2
+            before_center = self._width // 2
         else:
             before_center = 0
 
@@ -138,9 +160,9 @@ class SingleLineEngine:
 
     def build_placeholder(self, y: int, text: str) -> Strip:
         if y != 0:
-            return Strip.blank(self._settings.width)
+            return Strip.blank(self._width)
 
-        text = f"{text:^{self._settings.width}}"
+        text = f"{text:^{self._width}}"
 
         return Strip([Segment(char, self.default_style) for char in text])
 
@@ -151,11 +173,11 @@ class SingleLineEngine:
         if self._settings.enable_pre_content_space:
             start = max(0, self._current_segment_idx - self._pre_content_space)
         else:
-            addition = self._settings.width // 2
+            addition = self._width // 2
             if self._current_segment_idx <= addition:
                 start = 0
             else:
                 start = max(0, self._current_segment_idx - addition)
-        end = min(start + self._settings.width, len(self._segments))
+        end = min(start + self._width, len(self._segments))
 
         return Strip(self._segments[start:end])
