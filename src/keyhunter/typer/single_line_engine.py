@@ -1,56 +1,24 @@
+from typing import Callable
+
 from rich.segment import Segment
 from rich.style import Style
 from textual import events
 from textual.strip import Strip
-from textual.theme import Theme
 
 from keyhunter.settings.schemas import SingleLineEngineSettings
 
+from .base_engine import BaseEngine
 
-class SingleLineEngine:
-    matched_style = Style.parse("green")
-    mismatched_style = Style.parse("red")
-    default_style = Style.parse("white")
-    next_char_style = default_style + Style(underline=True)
+
+class SingleLineEngine(BaseEngine):
 
     def __init__(self, settings: SingleLineEngineSettings) -> None:
-        self._segments = []
-        self._type_results = []
-        self._current_segment_idx = 0
-        self.enable_pre_content_space: bool = settings.enable_pre_content_space
-        self._width = settings.width
-        self._height = settings.height
+        super().__init__(settings)
 
+        self.enable_pre_content_space = settings.enable_pre_content_space
         self._pre_content_space = (
             (settings.width // 2) if settings.enable_pre_content_space else 0
         )
-        self._settings = settings
-
-    @property
-    def width(self) -> int:
-        return self._width
-
-    @width.setter
-    def width(self, new_width: int) -> None:
-        if new_width > self._settings.max_width:
-            self._width = self._settings.max_width
-        elif new_width < self._settings.min_width:
-            self._width = self._settings.min_width
-        else:
-            self._width = new_width
-
-    @property
-    def height(self) -> int:
-        return self._height
-
-    @height.setter
-    def height(self, new_height: int) -> None:
-        if new_height > self._settings.max_height:
-            self._height = self._settings.max_height
-        elif new_height < self._settings.min_height:
-            self._height = self._settings.min_height
-        else:
-            self._height = new_height
 
     @property
     def _current_segment(self) -> Segment:
@@ -61,11 +29,11 @@ class SingleLineEngine:
         self._segments[self._current_segment_idx] = current_segment
 
     @property
-    def total_chars(self):
+    def total_chars(self) -> int:
         return len(self._segments) - self._pre_content_space
 
     @property
-    def correct_chars(self):
+    def correct_chars(self) -> int:
         return sum(self._type_results)
 
     def _update_current_segment(self, style: Style) -> None:
@@ -85,36 +53,14 @@ class SingleLineEngine:
         else:
             return False
 
-    def set_chars_style(self, theme: Theme) -> None:
-        def segment_style(self, style: Style | None) -> Style:
-            match style:
-                case self.matched_style:
-                    return matched_style
-                case self.mismatched_style:
-                    return mismatched_style
-                case self.next_char_style:
-                    return next_char_style
-                case _:
-                    return default_style
-
-        bgcolor = theme.background if theme.background else "#111111"
-        default_style = Style(color=theme.foreground, bgcolor=bgcolor)
-        matched_style = Style(color=theme.success, bgcolor=bgcolor)
-        mismatched_style = Style(color=theme.error, bgcolor=bgcolor)
-        next_char_style = default_style + Style(underline=True)
-
+    def _set_segments_style(self, get_segment_style: Callable) -> None:
         self._segments = [
             Segment(
                 text=segment.text,
-                style=segment_style(self, segment.style),
+                style=get_segment_style(self, segment.style),
             )
             for segment in self._segments
         ]
-
-        self.default_style = default_style
-        self.matched_style = matched_style
-        self.mismatched_style = mismatched_style
-        self.next_char_style = next_char_style
 
     def prepare_content(self, text: str) -> None:
         text = " ".join(text.split())
@@ -132,7 +78,7 @@ class SingleLineEngine:
         self._update_current_segment(self.next_char_style)
 
     def resize(self) -> None:
-        if self._settings.enable_pre_content_space:
+        if self.enable_pre_content_space:
             before_center = self._width // 2
         else:
             before_center = 0
@@ -170,7 +116,7 @@ class SingleLineEngine:
         if not self._segments or y != 0:
             return Strip.blank(self._width)
 
-        if self._settings.enable_pre_content_space:
+        if self.enable_pre_content_space:
             start = max(0, self._current_segment_idx - self._pre_content_space)
         else:
             addition = self._width // 2

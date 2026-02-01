@@ -1,24 +1,15 @@
+from typing import Callable
+
 from rich.segment import Segment
 from rich.style import Style
 from textual import events
 from textual.strip import Strip
-from textual.theme import Theme
 
-from keyhunter.settings.schemas import StandardEngineSettings
+from keyhunter.typer.base_engine import BaseEngine
 
 
-class StandardEngine:
-    matched_style = Style.parse("green")
-    mismatched_style = Style.parse("red")
-    default_style = Style.parse("white")
-    next_char_style = default_style + Style(underline=True)
+class StandardEngine(BaseEngine):
     _text = ""
-
-    def __init__(self, settings: StandardEngineSettings) -> None:
-        self._segments = []
-        self._type_results = []
-        self._current_segment_idx = 0
-        self._settings = settings
 
     @property
     def _current_segment(self) -> Segment | None:
@@ -49,11 +40,11 @@ class StandardEngine:
                 return line_index
 
     @property
-    def total_chars(self):
+    def total_chars(self) -> int:
         return sum(len(line) for line in self._segments)
 
     @property
-    def correct_chars(self):
+    def correct_chars(self) -> int:
         return sum(self._type_results)
 
     def _update_current_segment(self, style: Style) -> None:
@@ -74,36 +65,14 @@ class StandardEngine:
         else:
             return False
 
-    def set_chars_style(self, theme: Theme) -> None:
-        def segment_style(self, style: Style | None) -> Style:
-            match style:
-                case self.matched_style:
-                    return matched_style
-                case self.mismatched_style:
-                    return mismatched_style
-                case self.next_char_style:
-                    return next_char_style
-                case _:
-                    return default_style
-
-        bgcolor = theme.background if theme.background else "#111111"
-        default_style = Style(color=theme.foreground, bgcolor=bgcolor)
-        matched_style = Style(color=theme.success, bgcolor=bgcolor)
-        mismatched_style = Style(color=theme.error, bgcolor=bgcolor)
-        next_char_style = default_style + Style(underline=True)
-
+    def _set_segments_style(self, get_segment_style: Callable) -> None:
         self._segments = [
             [
-                Segment(segment.text, segment_style(self, segment.style))
+                Segment(segment.text, get_segment_style(self, segment.style))
                 for segment in line
             ]
             for line in self._segments
         ]
-
-        self.default_style = default_style
-        self.matched_style = matched_style
-        self.mismatched_style = mismatched_style
-        self.next_char_style = next_char_style
 
     def _segmentize_word(self, word: str, append_space: bool = True) -> list[Segment]:
         segments = [Segment(char, self.default_style) for char in word]
@@ -113,13 +82,16 @@ class StandardEngine:
         return segments
 
     def prepare_content(self, text: str) -> None:
-        self._segments.clear()
         self._type_results.clear()
         self._text = text
-        words = text.split()
+        self.resize()
+
+    def resize(self) -> None:
+        self._segments.clear()
+        words = self._text.split()
         line = self._segmentize_word(words[0])
         for word in words[1:]:
-            if (len(line) + len(word)) < self._settings.width:
+            if (len(line) + len(word)) < self._width:
                 line.extend(self._segmentize_word(word))
             else:
                 self._segments.append(line)
@@ -143,23 +115,21 @@ class StandardEngine:
         return self._update_segments(type_result)
 
     def _blank_strip(self) -> Strip:
-        return Strip(
-            [Segment(" ", self.default_style) for _ in range(self._settings.width)]
-        )
+        return Strip([Segment(" ", self.default_style) for _ in range(self._width)])
 
     def build_placeholder(self, y: int, text: str) -> Strip:
-        if y != self._settings.height // 2:
+        if y != self._height // 2:
             return self._blank_strip()
 
-        text = f"{text:^{self._settings.width}}"
+        text = f"{text:^{self._width}}"
 
         return Strip([Segment(char, self.default_style) for char in text])
 
     def build_line(self, y: int) -> Strip:
-        if not self._segments or y >= self._settings.height:
-            return Strip.blank(self._settings.width)
+        if not self._segments or y >= self._height:
+            return Strip.blank(self._width)
 
-        middle = self._settings.height // 2
+        middle = self._height // 2
         if self._current_line is not None and self._current_line > middle:
             y += self._current_line - middle
 

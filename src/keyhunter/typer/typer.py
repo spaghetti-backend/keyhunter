@@ -50,18 +50,18 @@ class Typer(Widget, can_focus=True):
 
         self.styles.height = engine_settings.height + BORDER_SIZE
         self.styles.width = engine_settings.width + BORDER_SIZE
-        self.engine.set_chars_style(self.app.available_themes[settings.theme])
+        self.engine.set_theme(self.app.available_themes[settings.theme])
 
     def on_mount(self, event: events.Mount) -> None:
         self.watch(self.app, "settings", self.on_settings_change, init=True)
-        self.engine.set_chars_style(self.app.available_themes[self.app.theme])
+        self.engine.set_theme(self.app.available_themes[self.app.theme])
         return super()._on_mount(event)
 
     def on_settings_change(
         self, old_settings: AppSettings, new_settings: AppSettings
     ) -> None:
         if old_settings.theme != new_settings.theme:
-            self.engine.set_chars_style(self.app.available_themes[new_settings.theme])
+            self.engine.set_theme(self.app.available_themes[new_settings.theme])
 
         if old_settings.typer != new_settings.typer:
             self._set_engine(new_settings)
