@@ -1,7 +1,9 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from textual import events
+from textual import events, on
+from textual.app import ComposeResult
+from textual.containers import CenterMiddle
 from textual.message import Message
 from textual.strip import Strip
 from textual.widget import Widget
@@ -18,8 +20,20 @@ from .standard_engine import StandardEngine
 
 if TYPE_CHECKING:
     from datetime import timedelta
+    from keyhunter.main import KeyHunter
 
 BORDER_SIZE: int = 2
+
+
+class TyperContainer(CenterMiddle, can_focus=True):
+    app: "KeyHunter"
+
+    def compose(self) -> ComposeResult:
+        yield Typer(settings=self.app.settings)
+
+    @on(events.Focus)
+    def handle_focus(self, _) -> None:
+        self.query_one(Typer).focus()
 
 
 class Typer(Widget, can_focus=True):

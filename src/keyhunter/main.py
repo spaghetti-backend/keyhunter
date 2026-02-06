@@ -1,6 +1,5 @@
 from textual import on
 from textual.app import App, ComposeResult
-from textual.containers import CenterMiddle, Container, VerticalScroll
 from textual.reactive import reactive
 from textual.widgets import ContentSwitcher, Footer
 
@@ -9,13 +8,13 @@ from keyhunter.settings.schemas import AppSettings
 from keyhunter.settings.service import SettingsService
 from keyhunter.settings.widgets import Settings
 from keyhunter.statistic.widgets import TypingStatistic
-from keyhunter.typer.typer import Typer
+from keyhunter.typer.typer import Typer, TyperContainer
 
 
 class KeyHunter(App):
     CSS_PATH = "style.tcss"
     BINDINGS = [
-        ("t", "switch_widget('typer')", "Type H"),
+        ("t", "switch_widget('typer')", "Typing"),
         ("s", "switch_widget('settings')", "Settings"),
         ("p", "switch_widget('statistic')", "Profile"),
     ]
@@ -29,29 +28,18 @@ class KeyHunter(App):
         self.theme = self.settings.theme
 
     def compose(self) -> ComposeResult:
-        with ContentSwitcher(initial="typer-container"):
-            yield CenterMiddle(
-                Typer(settings=self.settings, id="typer"), id="typer-container"
-            )
-            yield VerticalScroll(
-                Settings(id="settings"),
-                id="settings-container",
-                classes="settings",
-            )
-            with CenterMiddle(id="statistic-container"):
-                yield TypingStatistic(id="statistic", classes="")
-        yield Footer()
+        with ContentSwitcher(initial="typer"):
+            yield TyperContainer(id="typer")
+            yield Settings(id="settings")
+            yield TypingStatistic(id="statistic")
+
+        yield Footer(show_command_palette=False)
 
     def action_switch_widget(self, widget_name: str) -> None:
         switcher = self.query_one(ContentSwitcher)
-        if switcher.current == "settings-container":
-            self.query_one("#settings", Settings).is_active = False
-        elif widget_name == "settings":
-            self.query_one("#settings", Settings).is_active = True
 
-        switcher.current = widget_name + "-container"
-        widget = self.query_one(f"#{widget_name}")
-        widget.focus()
+        switcher.current = widget_name
+        self.query_one(f"#{widget_name}").focus()
 
     def watch_settings(self, settings: AppSettings) -> None:
         setting = settings.last_modified

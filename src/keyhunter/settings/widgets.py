@@ -1,8 +1,8 @@
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Literal
 
-from textual import on
+from textual import events, on
 from textual.app import ComposeResult
-from textual.containers import Center, Container, HorizontalGroup
+from textual.containers import Center, Container, HorizontalGroup, VerticalScroll
 from textual.message import Message
 from textual.reactive import reactive
 from textual.validation import Number, Validator
@@ -12,11 +12,13 @@ from textual.widgets import Button, Input, Label, Rule, Select, Switch
 from keyhunter.content.schemas import ContentType
 from keyhunter.settings import constants
 
+from .messages import InvalidSetting, SettingChanged
+from .schemas import SettingUpdateInfo, TyperBorder, TyperEngine
+from .service import AppSettings
 from .simulator import TyperSimulator
 
-from .messages import InvalidSetting, SettingChanged
-from .schemas import SettingUpdateInfo, TyperEngine, TyperBorder
-from .service import AppSettings
+if TYPE_CHECKING:
+    from keyhunter.main import KeyHunter
 
 
 class SelectSetting(HorizontalGroup):
@@ -148,7 +150,9 @@ class SwitchSetting(HorizontalGroup):
         )
 
 
-class Settings(Widget):
+class Settings(VerticalScroll, can_focus=True):
+    app: "KeyHunter"
+
     class Save(Message):
         def __init__(self) -> None:
             super().__init__()
@@ -176,7 +180,7 @@ class Settings(Widget):
             typer_simulator.pause()
 
     def compose(self) -> ComposeResult:
-        settings: AppSettings = self.app.settings  # type: ignore
+        settings: AppSettings = self.app.settings
 
         # App settings
         themes = [
@@ -295,7 +299,7 @@ class Settings(Widget):
             yield Button(label="save", id="save", compact=True)
 
     def on_mount(self) -> None:
-        settings = self.app.settings  # type: ignore
+        settings = self.app.settings
         self._toggle_typer_engine_settings(settings.typer.typer_engine)
         self._toggle_content_settings(settings.content.content_type)
 
@@ -317,6 +321,18 @@ class Settings(Widget):
 
         self.query_one(container_to_show).remove_class("hidden")
         self.query_one(container_to_hide).add_class("hidden")
+
+    @on(events.Focus)
+    def handle_focus(self) -> None:
+        for child_widget in self.walk_children(Widget):
+            if child_widget.can_focus:
+                child_widget.focus()
+                break
+
+    @on(events.DescendantFocus)
+    @on(events.DescendantBlur)
+    def handle_descendant_focus(self) -> None:
+        self.is_active = self.has_focus_within
 
     @on(SettingChanged)
     def update_settings(self, message: SettingChanged) -> None:

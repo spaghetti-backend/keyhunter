@@ -2,16 +2,13 @@ Settings {
   min-width: 60;
   width: auto;
   height: auto;
+  scrollbar-size-vertical: 0;
 }
 
-TypingStatistic {
-  height: auto;
-  width: 40; 
-}
 
 Stat {
+  width: 40;
   height: 3;
-  background: red;
 }
 
 Rule {
@@ -32,9 +29,6 @@ Switch {
   dock: right;
 }
 
-.settings {
-  scrollbar-size-vertical: 0;
-}
 
 .setting-row {
   width: 60;

@@ -30,39 +30,36 @@ class Stat(Widget):
         self.set_reactive(Stat.statistic, statistic)
 
     def compose(self) -> ComposeResult:
-        with CenterMiddle():
-            if not self.statistic:
-                yield Label("There is no any typing result")
-            else:
-                hits_percentage = round(
-                    (self.statistic.correct / self.statistic.total) * 100, 2
-                )
-                hits_data = f"{self.statistic.correct}/{self.statistic.total} ({hits_percentage}%)"
-                yield StatisticRow(
-                    label="Hits", data=hits_data, classes="statistic-row"
-                )
+        if not self.statistic:
+            yield Label("There is no any typing result")
+        else:
+            hits_percentage = round(
+                (self.statistic.correct / self.statistic.total) * 100, 2
+            )
+            hits_data = (
+                f"{self.statistic.correct}/{self.statistic.total} ({hits_percentage}%)"
+            )
+            yield StatisticRow(label="Hits", data=hits_data, classes="statistic-row")
 
-                yield StatisticRow(
-                    label="Elapsed",
-                    data=(datetime.min + self.statistic.elapsed).strftime("%M:%S.%f")[
-                        :-4
-                    ],
-                    classes="statistic-row",
-                )
+            yield StatisticRow(
+                label="Elapsed",
+                data=(datetime.min + self.statistic.elapsed).strftime("%M:%S.%f")[:-4],
+                classes="statistic-row",
+            )
 
-                cpm_data = str(
-                    round(
-                        self.statistic.total
-                        / (self.statistic.elapsed.total_seconds() / 60),
-                        2,
-                    )
+            cpm_data = str(
+                round(
+                    self.statistic.total
+                    / (self.statistic.elapsed.total_seconds() / 60),
+                    2,
                 )
-                yield StatisticRow(
-                    label="Chars per minute", data=cpm_data, classes="statistic-row"
-                )
+            )
+            yield StatisticRow(
+                label="Chars per minute", data=cpm_data, classes="statistic-row"
+            )
 
 
-class TypingStatistic(Widget):
+class TypingStatistic(CenterMiddle):
     def compose(self) -> ComposeResult:
         yield Stat(id="stat")
         yield Label("Statistic")
