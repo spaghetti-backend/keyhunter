@@ -1,6 +1,6 @@
 from textual import on
 from textual.app import App, ComposeResult
-from textual.containers import CenterMiddle, VerticalScroll
+from textual.containers import CenterMiddle, Container, VerticalScroll
 from textual.reactive import reactive
 from textual.widgets import ContentSwitcher, Footer
 
@@ -17,6 +17,7 @@ class KeyHunter(App):
     BINDINGS = [
         ("t", "switch_widget('typer')", "Type H"),
         ("s", "switch_widget('settings')", "Settings"),
+        ("p", "switch_widget('statistic')", "Profile"),
     ]
 
     settings: reactive[AppSettings] = reactive(AppSettings, init=False)
@@ -33,8 +34,12 @@ class KeyHunter(App):
                 Typer(settings=self.settings, id="typer"), id="typer-container"
             )
             yield VerticalScroll(
-                Settings(id="settings"), id="settings-container", classes="settings"
+                Settings(id="settings"),
+                id="settings-container",
+                classes="settings",
             )
+            with CenterMiddle(id="statistic-container"):
+                yield TypingStatistic(id="statistic", classes="")
         yield Footer()
 
     def action_switch_widget(self, widget_name: str) -> None:
@@ -64,14 +69,14 @@ class KeyHunter(App):
         self.settings_manager.save()
 
     @on(Typer.Statistic)
-    def show_typing_statistic(self, message: Typer.Statistic) -> None:
-        self.push_screen(TypingStatistic(message))
+    async def show_typing_statistic(self, message: Typer.Statistic) -> None:
+        await self.query_one(TypingStatistic).update_last_typing_result(message)
+        self.action_switch_widget("statistic")
 
 
 def main():
     app = KeyHunter()
     app.run()
-    # app.run(inline=True)
 
 
 if __name__ == "__main__":

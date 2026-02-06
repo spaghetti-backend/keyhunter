@@ -109,6 +109,11 @@ class Typer(Widget, can_focus=True):
         self._start_time = datetime.now()
 
     def stop_typing(self) -> None:
+        self.is_active_session = False
+
+        if not self.engine.typed_chars:
+            return
+
         self.post_message(
             self.Statistic(
                 datetime.now() - self._start_time,
@@ -116,11 +121,6 @@ class Typer(Widget, can_focus=True):
                 self.engine.correct_chars,
             )
         )
-
-        self.is_active_session = False
-
-    def retry(self) -> None:
-        pass
 
     def render_line(self, y: int) -> Strip:
         if not self.is_active_session:

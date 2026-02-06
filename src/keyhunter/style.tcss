@@ -5,8 +5,13 @@ Settings {
 }
 
 TypingStatistic {
-  width: 100; 
-  height: 10;
+  height: auto;
+  width: 40; 
+}
+
+Stat {
+  height: 3;
+  background: red;
 }
 
 Rule {
@@ -20,7 +25,7 @@ Switch {
 }
 
 .statistic-row {
-  width: 60;
+  width: 40;
 }
 
 .statistic-data {

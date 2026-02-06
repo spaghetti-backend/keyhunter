@@ -2,8 +2,9 @@ from datetime import datetime
 
 from textual.app import ComposeResult
 from textual.containers import CenterMiddle, HorizontalGroup
-from textual.screen import ModalScreen
-from textual.widgets import Footer, Label
+from textual.reactive import reactive
+from textual.widget import Widget
+from textual.widgets import Label
 
 from keyhunter.typer.typer import Typer
 
@@ -21,51 +22,50 @@ class StatisticRow(HorizontalGroup):
         yield Label(content=self.data, classes="statistic-data")
 
 
-class TypingStatistic(ModalScreen[tuple[int, str]]):
-    BINDINGS = [
-        ("r", "return", "Retry"),
-        ("q", "exit", "Quit"),
-    ]
+class Stat(Widget):
+    statistic: reactive[Typer.Statistic | None] = reactive(None, recompose=True)
 
-    def __init__(
-        self,
-        statistic: Typer.Statistic,
-        name: str | None = None,
-        id: str | None = None,
-        classes: str | None = None,
-    ) -> None:
-        super().__init__(name, id, classes)
-        self._statistic = statistic
+    def __init__(self, statistic: Typer.Statistic | None = None, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.set_reactive(Stat.statistic, statistic)
 
     def compose(self) -> ComposeResult:
         with CenterMiddle():
-            hits_percentage = round(
-                (self._statistic.correct / self._statistic.total) * 100, 2
-            )
-            hits_data = f"{self._statistic.correct}/{self._statistic.total} ({hits_percentage}%)"
-            yield StatisticRow(label="Hits", data=hits_data, classes="statistic-row")
-
-            yield StatisticRow(
-                label="Elapsed",
-                data=(datetime.min + self._statistic.elapsed).strftime("%M:%S.%f")[:-4],
-                classes="statistic-row",
-            )
-
-            cpm_data = str(
-                round(
-                    self._statistic.total
-                    / (self._statistic.elapsed.total_seconds() / 60),
-                    2,
+            if not self.statistic:
+                yield Label("There is no any typing result")
+            else:
+                hits_percentage = round(
+                    (self.statistic.correct / self.statistic.total) * 100, 2
                 )
-            )
-            yield StatisticRow(
-                label="Chars per minute", data=cpm_data, classes="statistic-row"
-            )
+                hits_data = f"{self.statistic.correct}/{self.statistic.total} ({hits_percentage}%)"
+                yield StatisticRow(
+                    label="Hits", data=hits_data, classes="statistic-row"
+                )
 
-        yield Footer(show_command_palette=False)
+                yield StatisticRow(
+                    label="Elapsed",
+                    data=(datetime.min + self.statistic.elapsed).strftime("%M:%S.%f")[
+                        :-4
+                    ],
+                    classes="statistic-row",
+                )
 
-    def action_return(self) -> None:
-        self.app.pop_screen()
+                cpm_data = str(
+                    round(
+                        self.statistic.total
+                        / (self.statistic.elapsed.total_seconds() / 60),
+                        2,
+                    )
+                )
+                yield StatisticRow(
+                    label="Chars per minute", data=cpm_data, classes="statistic-row"
+                )
 
-    def action_exit(self) -> None:
-        self.app.exit()
+
+class TypingStatistic(Widget):
+    def compose(self) -> ComposeResult:
+        yield Stat(id="stat")
+        yield Label("Statistic")
+
+    async def update_last_typing_result(self, statistic: Typer.Statistic) -> None:
+        self.query_one(Stat).statistic = statistic
