@@ -1,4 +1,5 @@
 from datetime import datetime
+from time import perf_counter
 from typing import TYPE_CHECKING
 
 from textual import events, on
@@ -14,6 +15,7 @@ from keyhunter.settings.schemas import (
     AppSettings,
     TyperEngine,
 )
+from keyhunter.profile.schemas import TypingSummary
 
 from .single_line_engine import SingleLineEngine
 from .standard_engine import StandardEngine
@@ -38,12 +40,10 @@ class TyperContainer(CenterMiddle, can_focus=True):
 
 class Typer(Widget, can_focus=True):
 
-    class Statistic(Message):
-        def __init__(self, elapsed: "timedelta", total: int, correct: int) -> None:
-            self.elapsed = elapsed
-            self.total = total
-            self.correct = correct
+    class TypingCompleted(Message):
+        def __init__(self, typing_summary: TypingSummary) -> None:
             super().__init__()
+            self.typing_summary = typing_summary
 
     def __init__(self, settings: AppSettings, **kwargs):
         super().__init__(**kwargs)
@@ -120,7 +120,7 @@ class Typer(Widget, can_focus=True):
 
     def start_typing(self) -> None:
         self.is_active_session = True
-        self._start_time = datetime.now()
+        self._start_time = perf_counter()
 
     def stop_typing(self) -> None:
         self.is_active_session = False
@@ -128,13 +128,13 @@ class Typer(Widget, can_focus=True):
         if not self.engine.typed_chars:
             return
 
-        self.post_message(
-            self.Statistic(
-                datetime.now() - self._start_time,
-                self.engine.typed_chars,
-                self.engine.correct_chars,
-            )
+        elapsed_time = perf_counter() - self._start_time
+        typing_summary = TypingSummary(
+            elapsed_time=elapsed_time,
+            total_chars=self.engine.typed_chars,
+            correct_chars=self.engine.correct_chars,
         )
+        self.post_message(self.TypingCompleted(typing_summary=typing_summary))
 
     def render_line(self, y: int) -> Strip:
         if not self.is_active_session:

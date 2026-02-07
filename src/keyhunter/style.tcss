@@ -6,7 +6,7 @@ Settings {
 }
 
 
-Stat {
+TypingSummaryView {
   width: 40;
   height: 3;
 }

@@ -7,7 +7,7 @@ from keyhunter.settings import constants
 from keyhunter.settings.schemas import AppSettings
 from keyhunter.settings.service import SettingsService
 from keyhunter.settings.widgets import Settings
-from keyhunter.statistic.widgets import TypingStatistic
+from keyhunter.profile.widgets import Profile
 from keyhunter.typer.typer import Typer, TyperContainer
 
 
@@ -16,7 +16,7 @@ class KeyHunter(App):
     BINDINGS = [
         ("t", "switch_widget('typer')", "Typing"),
         ("s", "switch_widget('settings')", "Settings"),
-        ("p", "switch_widget('statistic')", "Profile"),
+        ("p", "switch_widget('profile')", "Profile"),
     ]
 
     settings: reactive[AppSettings] = reactive(AppSettings, init=False)
@@ -31,7 +31,7 @@ class KeyHunter(App):
         with ContentSwitcher(initial="typer"):
             yield TyperContainer(id="typer")
             yield Settings(id="settings")
-            yield TypingStatistic(id="statistic")
+            yield Profile(id="profile")
 
         yield Footer(show_command_palette=False)
 
@@ -56,10 +56,10 @@ class KeyHunter(App):
         message.stop()
         self.settings_manager.save()
 
-    @on(Typer.Statistic)
-    async def show_typing_statistic(self, message: Typer.Statistic) -> None:
-        await self.query_one(TypingStatistic).update_last_typing_result(message)
-        self.action_switch_widget("statistic")
+    @on(Typer.TypingCompleted)
+    async def show_typing_statistic(self, message: Typer.TypingCompleted) -> None:
+        await self.query_one(Profile).update_last_typing_result(message.typing_summary)
+        self.action_switch_widget("profile")
 
 
 def main():
