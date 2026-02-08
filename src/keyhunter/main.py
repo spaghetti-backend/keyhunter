@@ -8,7 +8,7 @@ from keyhunter.settings.schemas import AppSettings
 from keyhunter.settings.service import SettingsService
 from keyhunter.settings.widgets import Settings
 from keyhunter.profile.widgets import Profile
-from keyhunter.typer.typer import Typer, TyperContainer
+from keyhunter.typer.widgets import Typer, TyperContainer
 
 
 class KeyHunter(App):

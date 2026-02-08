@@ -2,7 +2,6 @@ from typing import Callable
 
 from rich.segment import Segment
 from rich.style import Style
-from textual import events
 from textual.strip import Strip
 
 from keyhunter.settings.schemas import SingleLineEngineSettings
@@ -11,7 +10,6 @@ from .base_engine import BaseEngine
 
 
 class SingleLineEngine(BaseEngine):
-
     def __init__(self, settings: SingleLineEngineSettings) -> None:
         super().__init__(settings)
 
@@ -21,101 +19,71 @@ class SingleLineEngine(BaseEngine):
         )
 
     @property
-    def enable_pre_content_space(self) -> bool:
+    def has_pre_content_space(self) -> bool:
         return self._enable_pre_content_space
 
-    @enable_pre_content_space.setter
-    def enable_pre_content_space(self, active: bool) -> None:
+    @has_pre_content_space.setter
+    def has_pre_content_space(self, active: bool) -> None:
         self._enable_pre_content_space = active
         self.resize()
 
     @property
-    def _current_segment(self) -> Segment:
-        return self._segments[self._current_segment_idx]
+    def current_char(self) -> Segment:
+        return self._chars[self._current_char_idx]
 
-    @_current_segment.setter
-    def _current_segment(self, current_segment: Segment) -> None:
-        self._segments[self._current_segment_idx] = current_segment
-
-    @property
-    def typed_chars(self) -> int:
-        total_segments = len(self._segments)
-        untyped_segments = (
-            total_segments - len(self._type_results) - self._pre_content_space
-        )
-        return total_segments - self._pre_content_space - untyped_segments
+    @current_char.setter
+    def current_char(self, current_char: Segment) -> None:
+        self._chars[self._current_char_idx] = current_char
 
     @property
-    def correct_chars(self) -> int:
-        return sum(self._type_results)
+    def has_next(self) -> bool:
+        return self._current_char_idx < (len(self._chars) - 1)
 
-    def _update_current_segment(self, style: Style) -> None:
-        self._current_segment = Segment(self._current_segment.text, style)
+    def _update_current_char(self, style: Style) -> None:
+        self.current_char = Segment(self.current_char.text, style)
 
-    def _update_segments(self, type_result: bool) -> bool:
-        if type_result:
-            self._update_current_segment(self.matched_style)
-        else:
-            self._update_current_segment(self.mismatched_style)
-
-        self._current_segment_idx += 1
-
-        if self._current_segment_idx < len(self._segments):
-            self._update_current_segment(self.next_char_style)
-            return True
-        else:
-            return False
-
-    def _set_segments_style(self, get_segment_style: Callable) -> None:
-        self._segments = [
+    def _set_chars_style(self, get_char_style: Callable) -> None:
+        self._chars = [
             Segment(
-                text=segment.text,
-                style=get_segment_style(self, segment.style),
+                text=char.text,
+                style=get_char_style(self, char.style),
             )
-            for segment in self._segments
+            for char in self._chars
         ]
 
     def prepare_content(self, text: str) -> None:
         text = " ".join(text.split())
-        self._type_results.clear()
 
-        before_segments = [
+        before_chars = [
             Segment(" ", self.default_style) for _ in range(self._pre_content_space)
         ]
 
-        self._segments = before_segments + [
+        self._chars = before_chars + [
             Segment(char, self.default_style) for char in text
         ]
 
-        self._current_segment_idx = self._pre_content_space
-        self._update_current_segment(self.next_char_style)
+        self._current_char_idx = self._pre_content_space
+        self._update_current_char(self.next_char_style)
 
     def resize(self) -> None:
-        if self.enable_pre_content_space:
+        if self.has_pre_content_space:
             before_center = self._width // 2
         else:
             before_center = 0
 
-        if self._segments:
-            before_segments = [
+        if self._chars:
+            before_chars = [
                 Segment(" ", self.default_style) for _ in range(before_center)
             ]
 
-            self._segments = (
-                before_segments
-                + self._segments[self._pre_content_space : len(self._segments)]
+            self._chars = (
+                before_chars + self._chars[self._pre_content_space : len(self._chars)]
             )
 
-        self._current_segment_idx = (
-            self._current_segment_idx - self._pre_content_space + before_center
+        self._current_char_idx = (
+            self._current_char_idx - self._pre_content_space + before_center
         )
         self._pre_content_space = before_center
-
-    def process_key(self, key: events.Key) -> bool:
-        type_result = self._current_segment.text == key.character
-        self._type_results.append(type_result)
-
-        return self._update_segments(type_result)
 
     def build_placeholder(self, y: int, text: str) -> Strip:
         if y != 0:
@@ -126,17 +94,17 @@ class SingleLineEngine(BaseEngine):
         return Strip([Segment(char, self.default_style) for char in text])
 
     def build_line(self, y: int) -> Strip:
-        if not self._segments or y != 0:
+        if not self._chars or y != 0:
             return Strip.blank(self._width)
 
-        if self.enable_pre_content_space:
-            start = max(0, self._current_segment_idx - self._pre_content_space)
+        if self.has_pre_content_space:
+            start = max(0, self._current_char_idx - self._pre_content_space)
         else:
             addition = self._width // 2
-            if self._current_segment_idx <= addition:
+            if self._current_char_idx <= addition:
                 start = 0
             else:
-                start = max(0, self._current_segment_idx - addition)
-        end = min(start + self._width, len(self._segments))
+                start = max(0, self._current_char_idx - addition)
+        end = min(start + self._width, len(self._chars))
 
-        return Strip(self._segments[start:end])
+        return Strip(self._chars[start:end])

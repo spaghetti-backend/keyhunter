@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Callable
+
 from rich.segment import Segment
 from rich.style import Style
-from textual import events
 from textual.strip import Strip
 from textual.theme import Theme
 
@@ -14,9 +14,8 @@ class BaseEngine(ABC):
     next_char_style = default_style + Style(underline=True)
 
     def __init__(self, settings) -> None:
-        self._segments = []
-        self._type_results = []
-        self._current_segment_idx = 0
+        self._chars = []
+        self._current_char_idx = 0
 
         self._width = settings.width
         self._min_width = settings._min_width
@@ -64,21 +63,29 @@ class BaseEngine(ABC):
 
     @property
     @abstractmethod
-    def _current_segment(self) -> Segment | None: ...
+    def current_char(self) -> Segment | None: ...
 
     @property
-    @abstractmethod
-    def typed_chars(self) -> int: ...
-
-    @property
-    @abstractmethod
-    def correct_chars(self) -> int: ...
+    def has_next(self) -> bool: ...
 
     @abstractmethod
-    def _set_segments_style(self, get_segment_style: Callable) -> None: ...
+    def _set_chars_style(self, get_char_style: Callable) -> None: ...
+
+    @abstractmethod
+    def _update_current_char(self, style: Style) -> None: ...
+
+    def mark_current_char(self, is_matched: bool) -> None:
+        if is_matched:
+            self._update_current_char(self.matched_style)
+        else:
+            self._update_current_char(self.mismatched_style)
+
+    def next(self) -> None:
+        self._current_char_idx += 1
+        self._update_current_char(self.next_char_style)
 
     def set_theme(self, theme: Theme) -> None:
-        def get_segment_style(self, style: Style | None) -> Style:
+        def get_char_style(self, style: Style | None) -> Style:
             match style:
                 case self.matched_style:
                     return matched_style
@@ -95,7 +102,7 @@ class BaseEngine(ABC):
         mismatched_style = Style(color=theme.error, bgcolor=bgcolor)
         next_char_style = default_style + Style(underline=True)
 
-        self._set_segments_style(get_segment_style)
+        self._set_chars_style(get_char_style)
 
         self.default_style = default_style
         self.matched_style = matched_style
@@ -107,9 +114,6 @@ class BaseEngine(ABC):
 
     @abstractmethod
     def resize(self) -> None: ...
-
-    @abstractmethod
-    def process_key(self, key: events.Key) -> bool: ...
 
     @abstractmethod
     def build_placeholder(self, y: int, text: str) -> Strip: ...

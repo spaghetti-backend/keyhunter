@@ -9,7 +9,7 @@ from textual.strip import Strip
 from textual.widget import Widget
 
 from keyhunter.content.service import ContentService
-from keyhunter.profile.schemas import TypingSessionSummary
+from keyhunter.profile.schemas import Keystroke, TypingSessionSummary
 from keyhunter.settings import constants
 from keyhunter.settings.schemas import (
     AppSettings,
@@ -23,17 +23,7 @@ if TYPE_CHECKING:
     from keyhunter.main import KeyHunter
 
 BORDER_SIZE: int = 2
-
-
-class TyperContainer(CenterMiddle, can_focus=True):
-    app: "KeyHunter"
-
-    def compose(self) -> ComposeResult:
-        yield Typer(settings=self.app.settings)
-
-    @on(events.Focus)
-    def handle_focus(self, _) -> None:
-        self.query_one(Typer).focus()
+MILLISECONDS_MULTIPLIER = 1000
 
 
 class Typer(Widget, can_focus=True):
@@ -43,15 +33,23 @@ class Typer(Widget, can_focus=True):
             super().__init__()
             self.typing_summary = typing_summary
 
+    class TypingStarted(Message): ...
+
     def __init__(self, settings: AppSettings, **kwargs):
         super().__init__(**kwargs)
 
         self.content_service = ContentService(settings.content)
-        self.is_active_session: bool = False
+        self._is_active_session = False
+        self._session_start_time_ms = 0
+        self._keystroke_time_ms = 0
+        self._keystrokes = []
         self.styles.border = (settings.typer.border, self.styles.base.color)
 
         self._set_engine(settings)
-        self.engine.set_theme(self.app.available_themes[settings.theme])
+
+    @property
+    def _timer_ms(self) -> int:
+        return round(perf_counter() * MILLISECONDS_MULTIPLIER)
 
     def _set_engine(self, settings: AppSettings) -> None:
         match settings.typer.typer_engine:
@@ -61,6 +59,8 @@ class Typer(Widget, can_focus=True):
             case TyperEngine.SINGLE_LINE:
                 engine_settings = settings.typer.single_line_engine
                 self.engine = SingleLineEngine(engine_settings)
+
+        self.engine.set_theme(self.app.available_themes[settings.theme])
 
         self.styles.height = engine_settings.height + BORDER_SIZE
         self.styles.width = engine_settings.width + BORDER_SIZE
@@ -84,7 +84,7 @@ class Typer(Widget, can_focus=True):
                 self._set_engine(settings)
             case constants.SLE_PRE_CONTENT_SPACE:
                 if settings.typer.typer_engine == TyperEngine.SINGLE_LINE:
-                    self.engine.enable_pre_content_space = setting.value  # type: ignore
+                    self.engine.has_pre_content_space = setting.value  # type: ignore
             case constants.SLE_WIDTH | constants.SE_WIDTH:
                 width = int(setting.value)
                 self.engine.width = width
@@ -98,15 +98,32 @@ class Typer(Widget, can_focus=True):
             case constants.CONTENT_LENGHT:
                 self.content_service.content_lenght = int(setting.value)
 
+    def _process_keystroke(self, event: events.Key) -> None:
+        if current_char := self.engine.current_char:
+            current_time = self._timer_ms
+            keystroke_elapsed_time_ms = current_time - self._keystroke_time_ms
+            is_matched = current_char.text == event.character
+            self._keystrokes.append(
+                Keystroke(
+                    key=current_char.text,
+                    is_matched=is_matched,
+                    elapsed_time_ms=keystroke_elapsed_time_ms,
+                )
+            )
+            self._keystroke_time_ms = current_time
+            self.engine.mark_current_char(is_matched)
+
+            if self.engine.has_next:
+                self.engine.next()
+            else:
+                self.stop_typing()
+
     def on_key(self, event: events.Key) -> None:
-        if self.is_active_session:
+        if self._is_active_session:
             if event.key == "escape":
                 self.stop_typing()
             else:
-                has_next = self.engine.process_key(event)
-
-                if not has_next:
-                    self.stop_typing()
+                self._process_keystroke(event)
         elif event.key == "space":
             self.engine.prepare_content(self.content_service.generate())
             self.start_typing()
@@ -117,26 +134,43 @@ class Typer(Widget, can_focus=True):
         self.refresh()
 
     def start_typing(self) -> None:
-        self.is_active_session = True
-        self._start_time = perf_counter()
+        self._keystrokes.clear()
+        self._is_active_session = True
+        self._session_start_time_ms = self._timer_ms
+        self._keystroke_time_ms = self._session_start_time_ms
+        self.post_message(self.TypingStarted())
 
     def stop_typing(self) -> None:
-        self.is_active_session = False
+        self._is_active_session = False
 
-        if not self.engine.typed_chars:
+        if not self._keystrokes:
             return
 
-        elapsed_time_ms = round((perf_counter() - self._start_time) * 1000)
+        elapsed_time_ms = self._timer_ms - self._session_start_time_ms
         typing_summary = TypingSessionSummary(
             elapsed_time_ms=elapsed_time_ms,
-            total_chars=self.engine.typed_chars,
-            correct_chars=self.engine.correct_chars,
-            keystrokes=[],
+            total_chars=len(self._keystrokes),
+            correct_chars=sum([keystroke.is_matched for keystroke in self._keystrokes]),
+            keystrokes=self._keystrokes,
         )
         self.post_message(self.TypingCompleted(typing_summary=typing_summary))
+        print(self._session_start_time_ms)
+        print(self._timer_ms)
+        print(typing_summary)
 
     def render_line(self, y: int) -> Strip:
-        if not self.is_active_session:
+        if not self._is_active_session:
             return self.engine.build_placeholder(y, self.content_service.placeholder)
 
         return self.engine.build_line(y)
+
+
+class TyperContainer(CenterMiddle, can_focus=True):
+    app: "KeyHunter"
+
+    def compose(self) -> ComposeResult:
+        yield Typer(settings=self.app.settings)
+
+    @on(events.Focus)
+    def handle_focus(self, _) -> None:
+        self.query_one(Typer).focus()

@@ -2,6 +2,8 @@ from datetime import datetime, timedelta
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
+MILLISECONDS_MULTIPLIER = 1000
+
 
 class BaseSchema(BaseModel):
     model_config = ConfigDict(validate_assignment=True, frozen=True)
@@ -34,7 +36,7 @@ class TypingSessionSummary(BaseSchema):
         if not self._is_typing_summary_present():
             return "N/A"
 
-        minutes = self.elapsed_time_ms / 60000
+        minutes = self.elapsed_time_ms / (60 * MILLISECONDS_MULTIPLIER)
         cpm = round(self.total_chars / minutes, 2)
         return f"{cpm}cpm"
 
