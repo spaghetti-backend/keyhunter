@@ -1,108 +1,225 @@
-from enum import StrEnum
-from typing import Any, Literal, NamedTuple
+from typing import Any, Literal
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    PrivateAttr,
-    computed_field,
-    model_validator,
-)
+from textual.dom import DOMNode
+from textual.reactive import reactive
 
 from keyhunter.content.schemas import ContentType, Language
+from keyhunter.settings.commands import SettingChangeCommand
+from keyhunter.settings.storage import SettingsStorage
+from keyhunter.typer.schemas import TyperEngine
 
 TyperBorder = Literal[
     "blank", "round", "solid", "thick", "double", "heavy", "hkey", "tall", "wide"
 ]
 
-
-class TyperEngine(StrEnum):
-    SINGLE_LINE = "Single line"
-    STANDARD = "Standard"
+SettingsDict = dict[str, Any]
 
 
-class SettingUpdateInfo(NamedTuple):
-    name: str
-    value: Any
+class SizeConstraints1(DOMNode):
+    _width: reactive[int] = reactive(50, init=False)
+    _height: reactive[int] = reactive(1, init=False)
 
+    _min_width = 50
+    _max_width = 120
 
-class BaseSchema(BaseModel):
-    model_config = ConfigDict(validate_assignment=True, frozen=True)
+    _min_height = 1
+    _max_height = 1
 
-
-class SizeConstraints(BaseSchema):
-    width: int = Field(default=80)
-    height: int = Field(default=1)
-    _min_width: int = PrivateAttr(default=50)
-    _max_width: int = PrivateAttr(default=120)
-    _min_height: int = PrivateAttr(default=1)
-    _max_height: int = PrivateAttr(default=1)
-
-    @computed_field
     @property
-    def min_height(self) -> int:
-        return self._min_height
+    def width(self) -> int:
+        return self._width
 
-    @computed_field
     @property
-    def max_height(self) -> int:
-        return self._max_height
+    def height(self) -> int:
+        return self._height
 
-    @computed_field
+    def _apply_settings(self, settings: SettingsDict) -> None:
+        width = settings.get("width")
+        if width:
+            self.set_reactive(self.__class__._width, width)
+        else:
+            self._width = self._min_width
+
+        height = settings.get("height")
+        if height:
+            self.set_reactive(self.__class__._height, height)
+        else:
+            self._height = self._min_height
+
+    def _dump_settings(self) -> SettingsDict:
+        return {
+            "width": self._width,
+            "height": self._height,
+        }
+
+
+class SingleLineEngineSettingsState(SizeConstraints1):
+    _start_from_center: reactive[bool] = reactive(True, init=False)
+
     @property
-    def min_width(self) -> int:
-        return self._min_width
+    def start_from_center(self) -> bool:
+        return self._start_from_center
 
-    @computed_field
+    def _apply_settings(self, settings: SettingsDict) -> None:
+        super()._apply_settings(settings)
+
+        start_from_center = settings.get("start_from_center")
+        if start_from_center is not None:
+            self.set_reactive(self.__class__._start_from_center, start_from_center)
+        else:
+            self._start_from_center = True
+
+    def _dump_settings(self) -> SettingsDict:
+        size_settings = super()._dump_settings()
+        return {
+            "start_from_center": self._start_from_center,
+            **size_settings,
+        }
+
+
+class StandardEngineSettingsState(SizeConstraints1):
+    _min_height = 3
+    _max_height = 9
+
+
+class TyperSettingsState(DOMNode):
+    _engine: reactive[TyperEngine] = reactive(TyperEngine.SINGLE_LINE, init=False)
+    _border: reactive[TyperBorder] = reactive("round", init=False)
+    _single_line_engine: SingleLineEngineSettingsState = SingleLineEngineSettingsState()
+    _standard_engine: StandardEngineSettingsState = StandardEngineSettingsState()
+
     @property
-    def max_width(self) -> int:
-        return self._max_width
+    def engine(self) -> TyperEngine:
+        return self._engine
 
-    def _clamp(self, v, lo, hi):
-        return max(lo, min(v, hi))
+    @property
+    def border(self) -> TyperBorder:
+        return self._border
 
-    @model_validator(mode="after")
-    def clamp_size(self):
-        object.__setattr__(
-            self, "width", self._clamp(self.width, self.min_width, self.max_width)
-        )
-        object.__setattr__(
-            self, "height", self._clamp(self.height, self.min_height, self.max_height)
-        )
-        return self
+    @property
+    def single_line_engine(self) -> SingleLineEngineSettingsState:
+        return self._single_line_engine
 
+    @property
+    def standard_engine(self) -> StandardEngineSettingsState:
+        return self._standard_engine
 
-class SingleLineEngineSettings(SizeConstraints):
-    enable_pre_content_space: bool = True
+    def _apply_settings(self, settings: SettingsDict) -> None:
+        engine = settings.get("engine")
+        if engine:
+            self.set_reactive(self.__class__._engine, TyperEngine(engine))
+        else:
+            self._engine = TyperEngine.SINGLE_LINE
 
+        border = settings.get("border")
+        if border:
+            self.set_reactive(self.__class__._border, border)
+        else:
+            self._border = "hkey"
 
-class StandardEngineSettings(SizeConstraints):
-    height: int = Field(default=5)
-    _min_height: int = PrivateAttr(default=3)
-    _max_height: int = PrivateAttr(default=9)
+        self._standard_engine._apply_settings(settings.get("standard_engine", {}))
+        self._single_line_engine._apply_settings(settings.get("single_line_engine", {}))
 
-
-class TypingSettings(BaseSchema):
-    typer_engine: TyperEngine = Field(default=TyperEngine.SINGLE_LINE)
-    border: TyperBorder = "blank"
-    single_line_engine: SingleLineEngineSettings = Field(
-        default_factory=SingleLineEngineSettings
-    )
-    standard_engine: StandardEngineSettings = Field(
-        default_factory=StandardEngineSettings
-    )
-
-
-class ContentSettings(BaseSchema):
-    language: Language = Field(default=Language.ENGLISH)
-    content_type: ContentType = Field(default=ContentType.COMMON)
-    content_lenght: int = Field(default=100)
+    def _dump_settings(self) -> SettingsDict:
+        return {
+            "engine": self._engine.value,
+            "border": self._border,
+            "single_line_engine": self._single_line_engine._dump_settings(),
+            "standard_engine": self._standard_engine._dump_settings(),
+        }
 
 
-class AppSettings(BaseSchema):
-    theme: str = "textual-dark"
-    typer: TypingSettings = Field(default_factory=TypingSettings)
-    content: ContentSettings = Field(default_factory=ContentSettings)
+class ContentSettingsState(DOMNode):
+    _language: reactive[Language] = reactive(Language.ENGLISH, init=False)
+    _content_type: reactive[ContentType] = reactive(ContentType.COMMON, init=False)
+    _content_lenght: reactive[int] = reactive(20, init=False)
+    _min_content_lenght = 20
+    _max_content_lenght = 1000
 
-    last_modified: SettingUpdateInfo | None = Field(default=None, exclude=True)
+    @property
+    def language(self) -> Language:
+        return self._language
+
+    @property
+    def content_type(self) -> ContentType:
+        return self._content_type
+
+    @property
+    def content_lenght(self) -> int:
+        return self._content_lenght
+
+    def _apply_settings(self, settings: SettingsDict) -> None:
+        language = settings.get("language")
+        if language:
+            self.set_reactive(self.__class__._language, Language(language))
+        else:
+            self._language = Language.ENGLISH
+
+        content_type = settings.get("content_type")
+        if content_type:
+            self.set_reactive(self.__class__._content_type, ContentType(content_type))
+        else:
+            self._content_type = ContentType.COMMON
+
+        content_lenght = settings.get("content_lenght")
+        if content_lenght:
+            self.set_reactive(self.__class__._content_lenght, content_lenght)
+        else:
+            self._content_lenght = 20
+
+    def _dump_settings(self) -> SettingsDict:
+        return {
+            "language": self._language.value,
+            "content_type": self._content_type.value,
+            "content_lenght": self._content_lenght,
+        }
+
+
+class AppSettingsState(DOMNode):
+    _theme: reactive[str] = reactive("nord", init=False)
+    _typer: TyperSettingsState = TyperSettingsState()
+    _content: ContentSettingsState = ContentSettingsState()
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._history: list[SettingChangeCommand] = []
+        self._storage = SettingsStorage()
+
+        settings = self._storage.load()
+        self._apply_settings(settings)
+
+    @property
+    def theme(self) -> str:
+        return self._theme
+
+    @property
+    def typer(self) -> TyperSettingsState:
+        return self._typer
+
+    @property
+    def content(self) -> ContentSettingsState:
+        return self._content
+
+    def update(self, command: SettingChangeCommand):
+        command.execute(self)
+        self._history.append(command)
+        self.save()
+
+    def reset_to_default(self) -> None:
+        self._apply_settings({})
+
+    def save(self) -> None:
+        self._storage.save(self._dump_settings())
+
+    def _apply_settings(self, settings: SettingsDict) -> None:
+        self._theme = settings.get("theme", "textual-dark")
+
+        self._typer._apply_settings(settings.get("typer", {}))
+        self._content._apply_settings(settings.get("content", {}))
+
+    def _dump_settings(self) -> SettingsDict:
+        return {
+            "theme": self._theme,
+            "typer": self._typer._dump_settings(),
+            "content": self._content._dump_settings(),
+        }

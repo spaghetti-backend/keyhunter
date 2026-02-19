@@ -1,14 +1,9 @@
 import random
+
 from keyhunter.typer.widgets import Typer
-from .schemas import AppSettings
 
 
-class TyperSimulator(Typer):
-    def on_settings_change(self, settings: AppSettings) -> None:
-        self._simulate_timer.stop()
-        super().on_settings_change(settings)
-        self.simulate(pause=False)
-
+class TyperSimulator(Typer, can_focus=False):
     def simulate(self, pause: bool = True):
         self._test_content = self.content_service.generate()
         self._test_content_idx = 0
@@ -37,3 +32,8 @@ class TyperSimulator(Typer):
             self._simulate_timer.stop()
             self.simulate(pause=False)
         self.refresh()
+
+    def _on_engine_changed(self) -> None:
+        self.stop()
+        super()._on_engine_changed()
+        self.simulate(pause=False)

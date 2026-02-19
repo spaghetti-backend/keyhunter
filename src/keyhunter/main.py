@@ -1,14 +1,12 @@
 from textual import on
 from textual.app import App, ComposeResult
-from textual.reactive import reactive
 from textual.widgets import ContentSwitcher, Footer
 
 from keyhunter.profile.service import ProfileService
 from keyhunter.profile.widgets import Profile
-from keyhunter.settings import constants
-from keyhunter.settings.schemas import AppSettings
-from keyhunter.settings.service import SettingsService
-from keyhunter.settings.widgets import Settings
+from keyhunter.settings.messages import SettingStateChanged
+from keyhunter.settings.schemas import AppSettingsState
+from keyhunter.settings.widgets.settings_container import SettingsContainer
 from keyhunter.typer.widgets import Typer, TyperContainer
 
 
@@ -20,20 +18,16 @@ class KeyHunter(App):
         ("p", "switch_widget('profile')", "Profile"),
     ]
 
-    settings: reactive[AppSettings] = reactive(AppSettings, init=False)
-
     def __init__(self) -> None:
         super().__init__()
-        self.settings_service = SettingsService()
         self.profile_service = ProfileService()
-        self.set_reactive(KeyHunter.settings, self.settings_service.settings)
-        self.theme = self.settings.theme
+        self.state = AppSettingsState()
 
     def compose(self) -> ComposeResult:
         with ContentSwitcher(initial="typer"):
             yield TyperContainer(id="typer")
-            yield Settings(id="settings")
             yield Profile(id="profile")
+            yield SettingsContainer(settings=self.state, id="settings")
 
         yield Footer(show_command_palette=False)
 
@@ -43,20 +37,15 @@ class KeyHunter(App):
         switcher.current = widget_name
         self.query_one(f"#{widget_name}").focus()
 
-    def watch_settings(self, settings: AppSettings) -> None:
-        setting = settings.last_modified
-        if setting and setting.name == constants.THEME:
-            self.theme = setting.value
+    def on_mount(self) -> None:
+        self.watch(self.state, "_theme", self._on_theme_changed)
 
-    @on(Settings.Update)
-    def update_settings(self, message: Settings.Update) -> None:
-        message.stop()
-        self.settings = self.settings_service.update(message.setting)
+    def _on_theme_changed(self, theme: str) -> None:
+        self.theme = theme
 
-    @on(Settings.Save)
-    def save_settings(self, message: Settings.Save) -> None:
-        message.stop()
-        self.settings_service.save()
+    @on(SettingStateChanged)
+    def on_setting_changed(self, m):
+        self.state.update(m.command)
 
     @on(Typer.TypingCompleted)
     async def update_typing_statistic(self, message: Typer.TypingCompleted) -> None:

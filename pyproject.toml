@@ -8,11 +8,8 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
-    "deepmerge>=2.0",
-    "pydantic>=2.12.5",
-    "pyyaml>=6.0.3",
+    "platformdirs>=4.5.1",
     "textual>=7.5.0",
-    "xdg-base-dirs>=6.0.2",
 ]
 
 [project.scripts]

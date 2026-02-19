@@ -8,13 +8,7 @@ from textual.theme import Theme
 
 
 class BaseEngine(ABC):
-    matched_style = Style.parse("green")
-    mismatched_style = Style.parse("red")
-    default_style = Style.parse("white")
-    next_char_style = default_style + Style(underline=True)
-
     def __init__(self, settings) -> None:
-        self._chars = []
         self._current_char_idx = 0
 
         self._width = settings.width

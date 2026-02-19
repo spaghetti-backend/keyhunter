@@ -1,16 +1,13 @@
 import random
 from importlib import resources
-from typing import Final
 
-from keyhunter.settings.schemas import ContentSettings
+from keyhunter.settings.schemas import ContentSettingsState
 
 from .schemas import ContentType
 
-DATASETS: Final = "src/keyhunter/content/datasets/"
-
 
 class ContentService:
-    def __init__(self, settings: ContentSettings) -> None:
+    def __init__(self, settings: ContentSettingsState) -> None:
         self.content_type = settings.content_type
         self.language = settings.language
         self.content_lenght = settings.content_lenght

@@ -8,10 +8,11 @@ from textual.message import Message
 from textual.strip import Strip
 from textual.widget import Widget
 
+from keyhunter.content.schemas import ContentType, Language
 from keyhunter.content.service import ContentService
-from keyhunter.settings import constants
 from keyhunter.settings.schemas import (
-    AppSettings,
+    AppSettingsState,
+    TyperBorder,
     TyperEngine,
 )
 
@@ -27,6 +28,7 @@ MILLISECONDS_MULTIPLIER = 1000
 
 
 class Typer(Widget, can_focus=True):
+    app: "KeyHunter"
 
     class TypingCompleted(Message):
         def __init__(self, typing_summary: Sequence[Keystroke]) -> None:
@@ -35,7 +37,7 @@ class Typer(Widget, can_focus=True):
 
     class TypingStarted(Message): ...
 
-    def __init__(self, settings: AppSettings, **kwargs):
+    def __init__(self, settings: AppSettingsState, **kwargs):
         super().__init__(**kwargs)
 
         self.content_service = ContentService(settings.content)
@@ -51,8 +53,8 @@ class Typer(Widget, can_focus=True):
     def _timer_ms(self) -> int:
         return round(perf_counter() * MILLISECONDS_MULTIPLIER)
 
-    def _set_engine(self, settings: AppSettings) -> None:
-        match settings.typer.typer_engine:
+    def _set_engine(self, settings: AppSettingsState) -> None:
+        match settings.typer.engine:
             case TyperEngine.STANDARD:
                 engine_settings = settings.typer.standard_engine
                 self.engine = StandardEngine(engine_settings)
@@ -66,35 +68,76 @@ class Typer(Widget, can_focus=True):
         self.styles.width = engine_settings.width + BORDER_SIZE
 
     def on_mount(self) -> None:
-        self.watch(self.app, "settings", self.on_settings_change, init=False)
+        self._subscribe()
 
-    def on_settings_change(self, settings: AppSettings) -> None:
-        setting = settings.last_modified
-        if not setting:
-            return
+    def _subscribe(self) -> None:
+        state = self.app.state
+        self.watch(state, "_theme", self._on_theme_changed, init=False)
+        self.watch(state.typer, "_engine", self._on_engine_changed, init=False)
+        self.watch(state.typer, "_border", self._on_border_changed, init=False)
 
-        match setting.name:
-            case constants.THEME:
-                self.engine.set_theme(self.app.available_themes[setting.value])
-            case constants.TYPER_BORDER:
-                self.styles.border = (setting.value, self.styles.base.color)
-            case constants.TYPER_ENGINE:
-                self._set_engine(settings)
-            case constants.SLE_PRE_CONTENT_SPACE:
-                if settings.typer.typer_engine == TyperEngine.SINGLE_LINE:
-                    self.engine.has_pre_content_space = setting.value  # type: ignore
-            case constants.SLE_WIDTH | constants.SE_WIDTH:
-                width = int(setting.value)
-                self.engine.width = width
-                self.styles.width = width + BORDER_SIZE
-            case constants.SE_HEIGHT:
-                height = int(setting.value)
-                self.engine.height = height
-                self.styles.height = height + BORDER_SIZE
-            case constants.CONTENT_TYPE:
-                self.content_service.content_type = setting.value
-            case constants.CONTENT_LENGHT:
-                self.content_service.content_lenght = int(setting.value)
+        sle_state = state.typer.single_line_engine
+        self.watch(sle_state, "_width", self._on_sle_width_changed, init=False)
+        self.watch(
+            sle_state,
+            "_start_from_center",
+            self._on_sle_start_from_center_changed,
+            init=False,
+        )
+
+        se_state = state.typer.standard_engine
+        self.watch(se_state, "_width", self._on_se_width_changed, init=False)
+        self.watch(se_state, "_height", self._on_se_height_changed, init=False)
+
+        self.watch(
+            state.content, "_language", self._on_content_language_changed, init=False
+        )
+        self.watch(
+            state.content, "_content_type", self._on_content_type_changed, init=False
+        )
+        self.watch(
+            state.content,
+            "_content_lenght",
+            self._on_content_lenght_changed,
+            init=False,
+        )
+
+    def _on_theme_changed(self, theme: str) -> None:
+        self.engine.set_theme(self.app.available_themes[theme])
+
+    def _on_border_changed(self, border: TyperBorder) -> None:
+        self.styles.border = (border, self.styles.base.color)
+
+    def _on_engine_changed(self) -> None:
+        self._set_engine(self.app.state)
+
+    def _on_sle_start_from_center_changed(self, start_from_center: bool) -> None:
+        if isinstance(self.engine, SingleLineEngine):
+            self.engine.start_from_center = start_from_center
+
+    def _on_sle_width_changed(self, width: int) -> None:
+        if isinstance(self.engine, SingleLineEngine):
+            self.engine.width = width
+            self.styles.width = width + BORDER_SIZE
+
+    def _on_se_width_changed(self, width: int) -> None:
+        if isinstance(self.engine, StandardEngine):
+            self.engine.width = width
+            self.styles.width = width + BORDER_SIZE
+
+    def _on_se_height_changed(self, height: int) -> None:
+        if isinstance(self.engine, StandardEngine):
+            self.engine.height = height
+            self.styles.height = height + BORDER_SIZE
+
+    def _on_content_language_changed(self, content_language: Language) -> None:
+        self.content_service.language = content_language
+
+    def _on_content_type_changed(self, content_type: ContentType) -> None:
+        self.content_service.content_type = content_type
+
+    def _on_content_lenght_changed(self, content_lenght: int) -> None:
+        self.content_service.content_lenght = content_lenght
 
     def _process_keystroke(self, event: events.Key) -> None:
         if current_char := self.engine.current_char:
@@ -156,7 +199,7 @@ class TyperContainer(CenterMiddle, can_focus=True):
     app: "KeyHunter"
 
     def compose(self) -> ComposeResult:
-        yield Typer(settings=self.app.settings)
+        yield Typer(settings=self.app.state)
 
     @on(events.Focus)
     def handle_focus(self) -> None:

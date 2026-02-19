@@ -1,4 +1,10 @@
+from enum import StrEnum
 from typing import NamedTuple
+
+
+class TyperEngine(StrEnum):
+    SINGLE_LINE = "Single line"
+    STANDARD = "Standard"
 
 
 class Keystroke(NamedTuple):

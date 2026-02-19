@@ -4,27 +4,26 @@ from rich.segment import Segment
 from rich.style import Style
 from textual.strip import Strip
 
-from keyhunter.settings.schemas import SingleLineEngineSettings
+from keyhunter.settings.schemas import SingleLineEngineSettingsState
 
 from .base_engine import BaseEngine
 
 
 class SingleLineEngine(BaseEngine):
-    def __init__(self, settings: SingleLineEngineSettings) -> None:
+    def __init__(self, settings: SingleLineEngineSettingsState) -> None:
         super().__init__(settings)
+        self._chars = []
 
-        self._enable_pre_content_space = settings.enable_pre_content_space
-        self._pre_content_space = (
-            (settings.width // 2) if settings.enable_pre_content_space else 0
-        )
+        self._start_from_center = settings.start_from_center
+        self._start_offset = (settings.width // 2) if settings.start_from_center else 0
 
     @property
-    def has_pre_content_space(self) -> bool:
-        return self._enable_pre_content_space
+    def start_from_center(self) -> bool:
+        return self._start_from_center
 
-    @has_pre_content_space.setter
-    def has_pre_content_space(self, active: bool) -> None:
-        self._enable_pre_content_space = active
+    @start_from_center.setter
+    def start_from_center(self, active: bool) -> None:
+        self._start_from_center = active
         self.resize()
 
     @property
@@ -55,18 +54,18 @@ class SingleLineEngine(BaseEngine):
         text = " ".join(text.split())
 
         before_chars = [
-            Segment(" ", self.default_style) for _ in range(self._pre_content_space)
+            Segment(" ", self.default_style) for _ in range(self._start_offset)
         ]
 
         self._chars = before_chars + [
             Segment(char, self.default_style) for char in text
         ]
 
-        self._current_char_idx = self._pre_content_space
+        self._current_char_idx = self._start_offset
         self._update_current_char(self.next_char_style)
 
     def resize(self) -> None:
-        if self.has_pre_content_space:
+        if self.start_from_center:
             before_center = self._width // 2
         else:
             before_center = 0
@@ -77,13 +76,13 @@ class SingleLineEngine(BaseEngine):
             ]
 
             self._chars = (
-                before_chars + self._chars[self._pre_content_space : len(self._chars)]
+                before_chars + self._chars[self._start_offset : len(self._chars)]
             )
 
         self._current_char_idx = (
-            self._current_char_idx - self._pre_content_space + before_center
+            self._current_char_idx - self._start_offset + before_center
         )
-        self._pre_content_space = before_center
+        self._start_offset = before_center
 
     def build_placeholder(self, y: int, text: str) -> Strip:
         if y != 0:
@@ -97,8 +96,8 @@ class SingleLineEngine(BaseEngine):
         if not self._chars or y != 0:
             return Strip.blank(self._width)
 
-        if self.has_pre_content_space:
-            start = max(0, self._current_char_idx - self._pre_content_space)
+        if self.start_from_center:
+            start = max(0, self._current_char_idx - self._start_offset)
         else:
             addition = self._width // 2
             if self._current_char_idx <= addition:

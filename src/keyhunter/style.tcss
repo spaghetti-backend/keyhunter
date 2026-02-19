@@ -1,12 +1,5 @@
-Settings {
-  min-width: 60;
-  width: auto;
-  height: auto;
-  scrollbar-size-vertical: 0;
-}
-
-Rule {
-  margin: 0;
+Screen {
+  scrollbar-size: 0 0;
 }
 
 Switch {
@@ -84,4 +77,23 @@ TypingSessions {
   padding: 0 1 0 0;
   dock: right;
   width: 6;
+}
+
+.setting-container {
+  align-horizontal: center;
+  padding: 1 0 0 0;
+}
+
+.settings-group-container {
+  width: auto;
+  border: hkey $panel;
+  border-title-align: center;
+  margin: 1 0;
+}
+
+
+SettingsContainer {
+  align-horizontal: center;
+  width: auto;
+  height: auto;
 }
