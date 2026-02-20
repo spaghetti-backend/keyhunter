@@ -15,7 +15,7 @@ TyperBorder = Literal[
 SettingsDict = dict[str, Any]
 
 
-class SizeConstraints1(DOMNode):
+class SizeConstraints(DOMNode):
     _width: reactive[int] = reactive(50, init=False)
     _height: reactive[int] = reactive(1, init=False)
 
@@ -53,7 +53,7 @@ class SizeConstraints1(DOMNode):
         }
 
 
-class SingleLineEngineSettingsState(SizeConstraints1):
+class SingleLineEngineSettings(SizeConstraints):
     _start_from_center: reactive[bool] = reactive(True, init=False)
 
     @property
@@ -77,16 +77,16 @@ class SingleLineEngineSettingsState(SizeConstraints1):
         }
 
 
-class StandardEngineSettingsState(SizeConstraints1):
+class StandardEngineSettings(SizeConstraints):
     _min_height = 3
     _max_height = 9
 
 
-class TyperSettingsState(DOMNode):
+class TyperSettings(DOMNode):
     _engine: reactive[TyperEngine] = reactive(TyperEngine.SINGLE_LINE, init=False)
     _border: reactive[TyperBorder] = reactive("round", init=False)
-    _single_line_engine: SingleLineEngineSettingsState = SingleLineEngineSettingsState()
-    _standard_engine: StandardEngineSettingsState = StandardEngineSettingsState()
+    _single_line_engine: SingleLineEngineSettings = SingleLineEngineSettings()
+    _standard_engine: StandardEngineSettings = StandardEngineSettings()
 
     @property
     def engine(self) -> TyperEngine:
@@ -97,11 +97,11 @@ class TyperSettingsState(DOMNode):
         return self._border
 
     @property
-    def single_line_engine(self) -> SingleLineEngineSettingsState:
+    def single_line_engine(self) -> SingleLineEngineSettings:
         return self._single_line_engine
 
     @property
-    def standard_engine(self) -> StandardEngineSettingsState:
+    def standard_engine(self) -> StandardEngineSettings:
         return self._standard_engine
 
     def _apply_settings(self, settings: SettingsDict) -> None:
@@ -129,7 +129,7 @@ class TyperSettingsState(DOMNode):
         }
 
 
-class ContentSettingsState(DOMNode):
+class ContentSettings(DOMNode):
     _language: reactive[Language] = reactive(Language.ENGLISH, init=False)
     _content_type: reactive[ContentType] = reactive(ContentType.COMMON, init=False)
     _content_lenght: reactive[int] = reactive(20, init=False)
@@ -175,10 +175,10 @@ class ContentSettingsState(DOMNode):
         }
 
 
-class AppSettingsState(DOMNode):
+class AppSettings(DOMNode):
     _theme: reactive[str] = reactive("nord", init=False)
-    _typer: TyperSettingsState = TyperSettingsState()
-    _content: ContentSettingsState = ContentSettingsState()
+    _typer: TyperSettings = TyperSettings()
+    _content: ContentSettings = ContentSettings()
 
     def __init__(self) -> None:
         super().__init__()
@@ -193,11 +193,11 @@ class AppSettingsState(DOMNode):
         return self._theme
 
     @property
-    def typer(self) -> TyperSettingsState:
+    def typer(self) -> TyperSettings:
         return self._typer
 
     @property
-    def content(self) -> ContentSettingsState:
+    def content(self) -> ContentSettings:
         return self._content
 
     def update(self, command: SettingChangeCommand):

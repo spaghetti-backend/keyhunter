@@ -4,8 +4,8 @@ from textual.widgets import ContentSwitcher, Footer
 
 from keyhunter.profile.service import ProfileService
 from keyhunter.profile.widgets import Profile
-from keyhunter.settings.messages import SettingStateChanged
-from keyhunter.settings.schemas import AppSettingsState
+from keyhunter.settings.messages import SettingChanged
+from keyhunter.settings.schemas import AppSettings
 from keyhunter.settings.widgets.settings_container import SettingsContainer
 from keyhunter.typer.widgets import Typer, TyperContainer
 
@@ -21,13 +21,13 @@ class KeyHunter(App):
     def __init__(self) -> None:
         super().__init__()
         self.profile_service = ProfileService()
-        self.state = AppSettingsState()
+        self.settings = AppSettings()
 
     def compose(self) -> ComposeResult:
         with ContentSwitcher(initial="typer"):
             yield TyperContainer(id="typer")
             yield Profile(id="profile")
-            yield SettingsContainer(settings=self.state, id="settings")
+            yield SettingsContainer(settings=self.settings, id="settings")
 
         yield Footer(show_command_palette=False)
 
@@ -38,14 +38,14 @@ class KeyHunter(App):
         self.query_one(f"#{widget_name}").focus()
 
     def on_mount(self) -> None:
-        self.watch(self.state, "_theme", self._on_theme_changed)
+        self.watch(self.settings, "_theme", self._on_theme_changed)
 
     def _on_theme_changed(self, theme: str) -> None:
         self.theme = theme
 
-    @on(SettingStateChanged)
+    @on(SettingChanged)
     def on_setting_changed(self, m):
-        self.state.update(m.command)
+        self.settings.update(m.command)
 
     @on(Typer.TypingCompleted)
     async def update_typing_statistic(self, message: Typer.TypingCompleted) -> None:

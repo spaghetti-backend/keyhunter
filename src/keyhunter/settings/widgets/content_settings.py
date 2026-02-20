@@ -22,7 +22,7 @@ class ContentLanguageSelector(HorizontalGroup):
     app: "KeyHunter"
 
     def compose(self) -> ComposeResult:
-        content_language = self.app.state.content.language.value
+        content_language = self.app.settings.content.language.value
         available_languages = [language.value for language in Language]
         with self.prevent(Select.Changed):
             yield SelectSetting(
@@ -42,7 +42,7 @@ class ContentTypeSelector(HorizontalGroup):
     app: "KeyHunter"
 
     def compose(self) -> ComposeResult:
-        content_type = self.app.state.content.content_type.value
+        content_type = self.app.settings.content.content_type.value
         available_types = [content_type.value for content_type in ContentType]
         with self.prevent(Select.Changed):
             yield SelectSetting(
@@ -55,7 +55,7 @@ class ContentTypeSelector(HorizontalGroup):
 
     def on_mount(self) -> None:
         self.watch(
-            self.app.state.content,
+            self.app.settings.content,
             "_content_type",
             self._on_content_type_changed,
             init=False,
@@ -70,7 +70,7 @@ class ContentLength(HorizontalGroup):
     app: "KeyHunter"
 
     def compose(self) -> ComposeResult:
-        content_settings = self.app.state.content
+        content_settings = self.app.settings.content
         content_lenght = content_settings.content_lenght
         length_validator = Number(
             minimum=content_settings._min_content_lenght,
@@ -86,7 +86,7 @@ class ContentLength(HorizontalGroup):
 
     def on_mount(self) -> None:
         self.watch(
-            self.app.state.content,
+            self.app.settings.content,
             "_content_lenght",
             self._on_content_lenght_changed,
             init=False,

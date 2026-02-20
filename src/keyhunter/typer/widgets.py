@@ -11,7 +11,7 @@ from textual.widget import Widget
 from keyhunter.content.schemas import ContentType, Language
 from keyhunter.content.service import ContentService
 from keyhunter.settings.schemas import (
-    AppSettingsState,
+    AppSettings,
     TyperBorder,
     TyperEngine,
 )
@@ -37,7 +37,7 @@ class Typer(Widget, can_focus=True):
 
     class TypingStarted(Message): ...
 
-    def __init__(self, settings: AppSettingsState, **kwargs):
+    def __init__(self, settings: AppSettings, **kwargs):
         super().__init__(**kwargs)
 
         self.content_service = ContentService(settings.content)
@@ -53,7 +53,7 @@ class Typer(Widget, can_focus=True):
     def _timer_ms(self) -> int:
         return round(perf_counter() * MILLISECONDS_MULTIPLIER)
 
-    def _set_engine(self, settings: AppSettingsState) -> None:
+    def _set_engine(self, settings: AppSettings) -> None:
         match settings.typer.engine:
             case TyperEngine.STANDARD:
                 engine_settings = settings.typer.standard_engine
@@ -71,32 +71,32 @@ class Typer(Widget, can_focus=True):
         self._subscribe()
 
     def _subscribe(self) -> None:
-        state = self.app.state
-        self.watch(state, "_theme", self._on_theme_changed, init=False)
-        self.watch(state.typer, "_engine", self._on_engine_changed, init=False)
-        self.watch(state.typer, "_border", self._on_border_changed, init=False)
+        settings = self.app.settings
+        self.watch(settings, "_theme", self._on_theme_changed, init=False)
+        self.watch(settings.typer, "_engine", self._on_engine_changed, init=False)
+        self.watch(settings.typer, "_border", self._on_border_changed, init=False)
 
-        sle_state = state.typer.single_line_engine
-        self.watch(sle_state, "_width", self._on_sle_width_changed, init=False)
+        sle_settings = settings.typer.single_line_engine
+        self.watch(sle_settings, "_width", self._on_sle_width_changed, init=False)
         self.watch(
-            sle_state,
+            sle_settings,
             "_start_from_center",
             self._on_sle_start_from_center_changed,
             init=False,
         )
 
-        se_state = state.typer.standard_engine
-        self.watch(se_state, "_width", self._on_se_width_changed, init=False)
-        self.watch(se_state, "_height", self._on_se_height_changed, init=False)
+        se_settings = settings.typer.standard_engine
+        self.watch(se_settings, "_width", self._on_se_width_changed, init=False)
+        self.watch(se_settings, "_height", self._on_se_height_changed, init=False)
 
         self.watch(
-            state.content, "_language", self._on_content_language_changed, init=False
+            settings.content, "_language", self._on_content_language_changed, init=False
         )
         self.watch(
-            state.content, "_content_type", self._on_content_type_changed, init=False
+            settings.content, "_content_type", self._on_content_type_changed, init=False
         )
         self.watch(
-            state.content,
+            settings.content,
             "_content_lenght",
             self._on_content_lenght_changed,
             init=False,
@@ -109,7 +109,7 @@ class Typer(Widget, can_focus=True):
         self.styles.border = (border, self.styles.base.color)
 
     def _on_engine_changed(self) -> None:
-        self._set_engine(self.app.state)
+        self._set_engine(self.app.settings)
 
     def _on_sle_start_from_center_changed(self, start_from_center: bool) -> None:
         if isinstance(self.engine, SingleLineEngine):
@@ -199,7 +199,7 @@ class TyperContainer(CenterMiddle, can_focus=True):
     app: "KeyHunter"
 
     def compose(self) -> ComposeResult:
-        yield Typer(settings=self.app.state)
+        yield Typer(settings=self.app.settings)
 
     @on(events.Focus)
     def handle_focus(self) -> None:

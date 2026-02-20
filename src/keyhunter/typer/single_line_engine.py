@@ -4,13 +4,13 @@ from rich.segment import Segment
 from rich.style import Style
 from textual.strip import Strip
 
-from keyhunter.settings.schemas import SingleLineEngineSettingsState
+from keyhunter.settings.schemas import SingleLineEngineSettings
 
 from .base_engine import BaseEngine
 
 
 class SingleLineEngine(BaseEngine):
-    def __init__(self, settings: SingleLineEngineSettingsState) -> None:
+    def __init__(self, settings: SingleLineEngineSettings) -> None:
         super().__init__(settings)
         self._chars = []
 

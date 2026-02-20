@@ -9,7 +9,7 @@ from textual.widgets import Input, Label, Select, Switch
 from textual.widgets._select import SelectOverlay
 
 from keyhunter.settings.commands import SettingChangeCommand
-from keyhunter.settings.messages import SettingStateChanged
+from keyhunter.settings.messages import SettingChanged
 
 
 class VimSelect(Select):
@@ -68,7 +68,7 @@ class SelectSetting(HorizontalGroup):
         event.stop()
 
         self.post_message(
-            SettingStateChanged(
+            SettingChanged(
                 command=self.command(event.value),
             )
         )
@@ -137,7 +137,7 @@ class InputSetting(HorizontalGroup):
 
         if event.validation_result and event.validation_result.is_valid:
             self.post_message(
-                SettingStateChanged(
+                SettingChanged(
                     command=self.command(self._convert_to_default_type(new_value)),
                 )
             )
@@ -167,7 +167,7 @@ class SwitchSetting(HorizontalGroup):
     def on_switch_changed(self, event: Switch.Changed) -> None:
         event.stop()
         self.post_message(
-            SettingStateChanged(
+            SettingChanged(
                 command=self.command(event.value),
             )
         )

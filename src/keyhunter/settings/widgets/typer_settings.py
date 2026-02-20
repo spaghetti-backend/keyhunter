@@ -30,7 +30,7 @@ class TyperEngineSelector(HorizontalGroup):
     app: "KeyHunter"
 
     def compose(self) -> ComposeResult:
-        current_engine = self.app.state.typer.engine.value
+        current_engine = self.app.settings.typer.engine.value
         available_engines = [engine.value for engine in TyperEngine]
         yield SelectSetting(
             command=SetTyperEngineCommand,
@@ -42,7 +42,10 @@ class TyperEngineSelector(HorizontalGroup):
 
     def on_mount(self) -> None:
         self.watch(
-            self.app.state.typer, "_engine", self._on_typer_engine_changed, init=False
+            self.app.settings.typer,
+            "_engine",
+            self._on_typer_engine_changed,
+            init=False,
         )
 
     def _on_typer_engine_changed(self, engine: TyperEngine) -> None:
@@ -54,7 +57,7 @@ class TyperBorderSelector(HorizontalGroup):
     app: "KeyHunter"
 
     def compose(self) -> ComposeResult:
-        current_border = self.app.state.typer.border
+        current_border = self.app.settings.typer.border
         available_borders = list(TyperBorder.__args__)
         yield SelectSetting(
             command=SetTyperBorderCommand,
@@ -66,7 +69,10 @@ class TyperBorderSelector(HorizontalGroup):
 
     def on_mount(self) -> None:
         self.watch(
-            self.app.state.typer, "_border", self._on_typer_border_changed, init=False
+            self.app.settings.typer,
+            "_border",
+            self._on_typer_border_changed,
+            init=False,
         )
 
     def _on_typer_border_changed(self, border: TyperBorder) -> None:
@@ -78,7 +84,7 @@ class SingleLineEngineWidth(HorizontalGroup):
     app: "KeyHunter"
 
     def compose(self) -> ComposeResult:
-        sle_settings = self.app.state.typer.single_line_engine
+        sle_settings = self.app.settings.typer.single_line_engine
         current_width = sle_settings.width
         width_validator = Number(
             minimum=sle_settings._min_width,
@@ -94,7 +100,7 @@ class SingleLineEngineWidth(HorizontalGroup):
 
     def on_mount(self) -> None:
         self.watch(
-            self.app.state.typer.single_line_engine,
+            self.app.settings.typer.single_line_engine,
             "_width",
             self._on_sle_width_changed,
             init=False,
@@ -109,7 +115,7 @@ class SingleLineEngineStartFromCenterSwitch(HorizontalGroup):
     app: "KeyHunter"
 
     def compose(self) -> ComposeResult:
-        current_choice = self.app.state.typer.single_line_engine.start_from_center
+        current_choice = self.app.settings.typer.single_line_engine.start_from_center
         yield SwitchSetting(
             command=SetSingleLineEngineStartFromCenterCommand,
             id="sle_start_from_center",
@@ -119,7 +125,7 @@ class SingleLineEngineStartFromCenterSwitch(HorizontalGroup):
 
     def on_mount(self) -> None:
         self.watch(
-            self.app.state.typer.single_line_engine,
+            self.app.settings.typer.single_line_engine,
             "_start_from_center",
             self._on_sle_start_from_center_changed,
             init=False,
@@ -134,7 +140,7 @@ class StandardEngineWidth(HorizontalGroup):
     app: "KeyHunter"
 
     def compose(self) -> ComposeResult:
-        se_settings = self.app.state.typer.standard_engine
+        se_settings = self.app.settings.typer.standard_engine
         current_width = se_settings.width
         width_validator = Number(
             minimum=se_settings._min_width,
@@ -150,7 +156,7 @@ class StandardEngineWidth(HorizontalGroup):
 
     def on_mount(self) -> None:
         self.watch(
-            self.app.state.typer.standard_engine,
+            self.app.settings.typer.standard_engine,
             "_width",
             self._on_se_width_changed,
             init=False,
@@ -165,7 +171,7 @@ class StandardEngineHeight(HorizontalGroup):
     app: "KeyHunter"
 
     def compose(self) -> ComposeResult:
-        se_settings = self.app.state.typer.standard_engine
+        se_settings = self.app.settings.typer.standard_engine
         current_height = se_settings.height
         height_validator = Number(
             minimum=se_settings._min_height,
@@ -181,7 +187,7 @@ class StandardEngineHeight(HorizontalGroup):
 
     def on_mount(self) -> None:
         self.watch(
-            self.app.state.typer.standard_engine,
+            self.app.settings.typer.standard_engine,
             "_height",
             self._on_se_height_changed,
             init=False,
@@ -202,7 +208,9 @@ class SingleLineEngineSettingsContainer(VerticalGroup):
         yield SingleLineEngineStartFromCenterSwitch(classes="setting-container")
 
     def on_mount(self) -> None:
-        self.watch(self.app.state.typer, "_engine", self._toggle_container_visibility)
+        self.watch(
+            self.app.settings.typer, "_engine", self._toggle_container_visibility
+        )
 
     def _toggle_container_visibility(self, typer_engine: TyperEngine) -> None:
         if typer_engine == TyperEngine.SINGLE_LINE:
@@ -221,7 +229,9 @@ class StandardEngineSettingsContainer(VerticalGroup):
         yield StandardEngineHeight(classes="setting-container")
 
     def on_mount(self) -> None:
-        self.watch(self.app.state.typer, "_engine", self._toggle_container_visibility)
+        self.watch(
+            self.app.settings.typer, "_engine", self._toggle_container_visibility
+        )
 
     def _toggle_container_visibility(self, typer_engine: TyperEngine) -> None:
         if typer_engine == TyperEngine.STANDARD:

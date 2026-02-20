@@ -16,7 +16,7 @@ class ThemeSelector(HorizontalGroup):
     app: "KeyHunter"
 
     def compose(self) -> ComposeResult:
-        current_theme = self.app.state.theme
+        current_theme = self.app.settings.theme
         available_themes = [
             theme for theme in self.app.available_themes if theme != "textual-ansi"
         ]
