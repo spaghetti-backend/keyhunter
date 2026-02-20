@@ -1,10 +1,10 @@
-from enum import StrEnum
+from enum import Enum
 
 
-class ContentType(StrEnum):
+class ContentType(str, Enum):
     SIMPLE = "Simple text"
     COMMON = "Common words"
 
 
-class Language(StrEnum):
+class Language(str, Enum):
     ENGLISH = "en"

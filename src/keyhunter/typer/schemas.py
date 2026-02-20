@@ -1,8 +1,8 @@
-from enum import StrEnum
+from enum import Enum
 from typing import NamedTuple
 
 
-class TyperEngine(StrEnum):
+class TyperEngine(str, Enum):
     SINGLE_LINE = "Single line"
     STANDARD = "Standard"
 

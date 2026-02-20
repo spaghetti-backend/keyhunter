@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "Rivkat Karimov", email = "redscorpion32.rk@gmail.com" }
 ]
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 dependencies = [
     "platformdirs>=4.5.1",
     "textual>=7.5.0",
