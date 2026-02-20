@@ -4,6 +4,7 @@ from textual.app import ComposeResult
 from textual.containers import HorizontalGroup, VerticalGroup
 from textual.widgets import Select
 
+from keyhunter import const as CONST
 from keyhunter.settings.commands import SetThemeCommand
 
 from .components import SelectSetting
@@ -28,6 +29,15 @@ class ThemeSelector(HorizontalGroup):
                 values=available_themes,
                 default=current_theme,
             )
+
+    def on_mount(self) -> None:
+        self.watch(
+            self.app.settings, CONST.THEME_KEY, self._on_theme_changed, init=False
+        )
+
+    def _on_theme_changed(self, theme: str) -> None:
+        with self.prevent(Select.Changed):
+            self.query_one(Select).value = theme
 
 
 class AppSettingsContainer(VerticalGroup):

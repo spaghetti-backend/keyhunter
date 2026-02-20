@@ -1,6 +1,7 @@
 import random
 from importlib import resources
 
+from keyhunter import const as CONST
 from keyhunter.settings.schemas import ContentSettings
 
 from .schemas import ContentType
@@ -13,21 +14,21 @@ class ContentService:
         self.content_lenght = settings.content_lenght
 
     def generate(self) -> str:
-        content_files = resources.files("keyhunter.content.datasets")
+        content_files = resources.files(CONST.DATASETS_STORAGE_PATH)
 
         match self.content_type:
             case ContentType.SIMPLE:
                 text = (
-                    content_files.joinpath(self.language.value)
-                    .joinpath("simple.txt")
+                    content_files.joinpath(self.language.name.lower())
+                    .joinpath(CONST.SIMPLE_FILENAME)
                     .read_text()
                 )
                 text = text.split("\n")
                 return random.choice(text)
             case ContentType.COMMON:
                 text = (
-                    content_files.joinpath(self.language.value)
-                    .joinpath("common_1000.txt")
+                    content_files.joinpath(self.language.name.lower())
+                    .joinpath(CONST.COMMON_WORDS_FILENAME)
                     .read_text()
                 )
                 words = text.split()

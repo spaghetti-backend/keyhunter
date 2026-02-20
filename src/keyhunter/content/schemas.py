@@ -6,5 +6,5 @@ class ContentType(str, Enum):
     COMMON = "Common words"
 
 
-class Language(str, Enum):
-    ENGLISH = "en"
+class ContentLanguage(str, Enum):
+    EN = "English"

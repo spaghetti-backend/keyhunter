@@ -5,7 +5,8 @@ from textual.containers import HorizontalGroup, VerticalGroup
 from textual.validation import Number
 from textual.widgets import Input, Select
 
-from keyhunter.content.schemas import ContentType, Language
+from keyhunter import const as CONST
+from keyhunter.content.schemas import ContentType, ContentLanguage
 from keyhunter.settings.commands import (
     SetContentLanguageCommand,
     SetContentLenghtCommand,
@@ -23,7 +24,7 @@ class ContentLanguageSelector(HorizontalGroup):
 
     def compose(self) -> ComposeResult:
         content_language = self.app.settings.content.language.value
-        available_languages = [language.value for language in Language]
+        available_languages = [language.value for language in ContentLanguage]
         with self.prevent(Select.Changed):
             yield SelectSetting(
                 command=SetContentLanguageCommand,
@@ -33,7 +34,15 @@ class ContentLanguageSelector(HorizontalGroup):
                 default=content_language,
             )
 
-    def _on_content_language_changed(self, content_language: Language) -> None:
+    def on_mount(self) -> None:
+        self.watch(
+            self.app.settings.content,
+            CONST.LANGUAGE_KEY,
+            self._on_content_language_changed,
+            init=False,
+        )
+
+    def _on_content_language_changed(self, content_language: ContentLanguage) -> None:
         with self.prevent(Select.Changed):
             self.query_one(Select).value = content_language
 
@@ -56,7 +65,7 @@ class ContentTypeSelector(HorizontalGroup):
     def on_mount(self) -> None:
         self.watch(
             self.app.settings.content,
-            "_content_type",
+            CONST.CONTENT_TYPE_KEY,
             self._on_content_type_changed,
             init=False,
         )
@@ -87,7 +96,7 @@ class ContentLength(HorizontalGroup):
     def on_mount(self) -> None:
         self.watch(
             self.app.settings.content,
-            "_content_lenght",
+            CONST.CONTENT_LENGHT_KEY,
             self._on_content_lenght_changed,
             init=False,
         )

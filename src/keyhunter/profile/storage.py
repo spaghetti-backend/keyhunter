@@ -1,15 +1,18 @@
 import sqlite3
 from contextlib import contextmanager
-from decimal import Decimal
 from typing import Iterator
 
 from platformdirs import user_data_path
 
+from keyhunter import const as CONST
+
 
 class SQLite3Storage:
     def __init__(self) -> None:
-        self._db_path = user_data_path("keyhunter", ensure_exists=True) / "stat.db"
-        self._multiplier = 100
+        self._db_path = (
+            user_data_path(CONST.APP_NAME, ensure_exists=True)
+            / CONST.TYPING_SESSIONS_STORAGE_NAME
+        )
 
         self._create_tables()
 
@@ -29,12 +32,6 @@ class SQLite3Storage:
         finally:
             if conn:
                 conn.close()
-
-    def _adapt_decimal(self, d: Decimal) -> int:
-        return int(d * self._multiplier)
-
-    def _convert_decimal(self, b: bytes) -> Decimal:
-        return Decimal(int(b.decode())) / self._multiplier
 
     def add_session_summary(
         self, session_summary: dict, keystrokes_summary: list[dict]
@@ -61,7 +58,7 @@ class SQLite3Storage:
             ).fetchone()
 
             for keystroke_summary in keystrokes_summary:
-                keystroke_summary["typing_session_id"] = typing_session_id[0]
+                keystroke_summary[CONST.TYPING_SESSION_ID_KEY] = typing_session_id[0]
 
             conn.executemany(keystrokes_summary_stmt, keystrokes_summary)
 

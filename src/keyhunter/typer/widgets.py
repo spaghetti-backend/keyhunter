@@ -8,7 +8,8 @@ from textual.message import Message
 from textual.strip import Strip
 from textual.widget import Widget
 
-from keyhunter.content.schemas import ContentType, Language
+from keyhunter import const as CONST
+from keyhunter.content.schemas import ContentLanguage, ContentType
 from keyhunter.content.service import ContentService
 from keyhunter.settings.schemas import (
     AppSettings,
@@ -22,9 +23,6 @@ from .standard_engine import StandardEngine
 
 if TYPE_CHECKING:
     from keyhunter.main import KeyHunter
-
-BORDER_SIZE: int = 2
-MILLISECONDS_MULTIPLIER = 1000
 
 
 class Typer(Widget, can_focus=True):
@@ -45,13 +43,13 @@ class Typer(Widget, can_focus=True):
         self._session_start_time_ms = 0
         self._keystroke_start_time_ms = 0
         self._keystrokes = []
-        self.styles.border = (settings.typer.border, self.styles.base.color)
+        self.styles.border = (settings.typer.border.value, self.styles.base.color)
 
         self._set_engine(settings)
 
     @property
     def _timer_ms(self) -> int:
-        return round(perf_counter() * MILLISECONDS_MULTIPLIER)
+        return round(perf_counter() * CONST.MILLISECONDS_MULTIPLIER)
 
     def _set_engine(self, settings: AppSettings) -> None:
         match settings.typer.engine:
@@ -64,40 +62,54 @@ class Typer(Widget, can_focus=True):
 
         self.engine.set_theme(self.app.available_themes[settings.theme])
 
-        self.styles.height = engine_settings.height + BORDER_SIZE
-        self.styles.width = engine_settings.width + BORDER_SIZE
+        self.styles.height = engine_settings.height + CONST.BORDER_EXPANSION
+        self.styles.width = engine_settings.width + CONST.BORDER_EXPANSION
 
     def on_mount(self) -> None:
         self._subscribe()
 
     def _subscribe(self) -> None:
         settings = self.app.settings
-        self.watch(settings, "_theme", self._on_theme_changed, init=False)
-        self.watch(settings.typer, "_engine", self._on_engine_changed, init=False)
-        self.watch(settings.typer, "_border", self._on_border_changed, init=False)
+        self.watch(settings, CONST.THEME_KEY, self._on_theme_changed, init=False)
+        self.watch(
+            settings.typer, CONST.ENGINE_KEY, self._on_engine_changed, init=False
+        )
+        self.watch(
+            settings.typer, CONST.BORDER_KEY, self._on_border_changed, init=False
+        )
 
         sle_settings = settings.typer.single_line_engine
-        self.watch(sle_settings, "_width", self._on_sle_width_changed, init=False)
+        self.watch(
+            sle_settings, CONST.WIDTH_KEY, self._on_sle_width_changed, init=False
+        )
         self.watch(
             sle_settings,
-            "_start_from_center",
+            CONST.SLE_START_FROM_CENTER_KEY,
             self._on_sle_start_from_center_changed,
             init=False,
         )
 
         se_settings = settings.typer.standard_engine
-        self.watch(se_settings, "_width", self._on_se_width_changed, init=False)
-        self.watch(se_settings, "_height", self._on_se_height_changed, init=False)
+        self.watch(se_settings, CONST.WIDTH_KEY, self._on_se_width_changed, init=False)
+        self.watch(
+            se_settings, CONST.HEIGHT_KEY, self._on_se_height_changed, init=False
+        )
 
         self.watch(
-            settings.content, "_language", self._on_content_language_changed, init=False
-        )
-        self.watch(
-            settings.content, "_content_type", self._on_content_type_changed, init=False
+            settings.content,
+            CONST.LANGUAGE_KEY,
+            self._on_content_language_changed,
+            init=False,
         )
         self.watch(
             settings.content,
-            "_content_lenght",
+            CONST.CONTENT_TYPE_KEY,
+            self._on_content_type_changed,
+            init=False,
+        )
+        self.watch(
+            settings.content,
+            CONST.CONTENT_LENGHT_KEY,
             self._on_content_lenght_changed,
             init=False,
         )
@@ -106,7 +118,7 @@ class Typer(Widget, can_focus=True):
         self.engine.set_theme(self.app.available_themes[theme])
 
     def _on_border_changed(self, border: TyperBorder) -> None:
-        self.styles.border = (border, self.styles.base.color)
+        self.styles.border = (border.value, self.styles.base.color)
 
     def _on_engine_changed(self) -> None:
         self._set_engine(self.app.settings)
@@ -118,19 +130,19 @@ class Typer(Widget, can_focus=True):
     def _on_sle_width_changed(self, width: int) -> None:
         if isinstance(self.engine, SingleLineEngine):
             self.engine.width = width
-            self.styles.width = width + BORDER_SIZE
+            self.styles.width = width + CONST.BORDER_EXPANSION
 
     def _on_se_width_changed(self, width: int) -> None:
         if isinstance(self.engine, StandardEngine):
             self.engine.width = width
-            self.styles.width = width + BORDER_SIZE
+            self.styles.width = width + CONST.BORDER_EXPANSION
 
     def _on_se_height_changed(self, height: int) -> None:
         if isinstance(self.engine, StandardEngine):
             self.engine.height = height
-            self.styles.height = height + BORDER_SIZE
+            self.styles.height = height + CONST.BORDER_EXPANSION
 
-    def _on_content_language_changed(self, content_language: Language) -> None:
+    def _on_content_language_changed(self, content_language: ContentLanguage) -> None:
         self.content_service.language = content_language
 
     def _on_content_type_changed(self, content_type: ContentType) -> None:

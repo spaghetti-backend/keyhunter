@@ -5,6 +5,7 @@ from textual.containers import HorizontalGroup, VerticalGroup
 from textual.validation import Number
 from textual.widgets import Input, Select, Switch
 
+from keyhunter import const as CONST
 from keyhunter.settings.commands import (
     SetSingleLineEngineStartFromCenterCommand,
     SetSingleLineEngineWidthCommand,
@@ -30,7 +31,7 @@ class TyperEngineSelector(HorizontalGroup):
     app: "KeyHunter"
 
     def compose(self) -> ComposeResult:
-        current_engine = self.app.settings.typer.engine.value
+        current_engine = self.app.settings.typer.engine
         available_engines = [engine.value for engine in TyperEngine]
         yield SelectSetting(
             command=SetTyperEngineCommand,
@@ -43,7 +44,7 @@ class TyperEngineSelector(HorizontalGroup):
     def on_mount(self) -> None:
         self.watch(
             self.app.settings.typer,
-            "_engine",
+            CONST.ENGINE_KEY,
             self._on_typer_engine_changed,
             init=False,
         )
@@ -58,7 +59,7 @@ class TyperBorderSelector(HorizontalGroup):
 
     def compose(self) -> ComposeResult:
         current_border = self.app.settings.typer.border
-        available_borders = list(TyperBorder.__args__)
+        available_borders = [border.value for border in TyperBorder]
         yield SelectSetting(
             command=SetTyperBorderCommand,
             id="typer_border",
@@ -70,7 +71,7 @@ class TyperBorderSelector(HorizontalGroup):
     def on_mount(self) -> None:
         self.watch(
             self.app.settings.typer,
-            "_border",
+            CONST.BORDER_KEY,
             self._on_typer_border_changed,
             init=False,
         )
@@ -101,7 +102,7 @@ class SingleLineEngineWidth(HorizontalGroup):
     def on_mount(self) -> None:
         self.watch(
             self.app.settings.typer.single_line_engine,
-            "_width",
+            CONST.WIDTH_KEY,
             self._on_sle_width_changed,
             init=False,
         )
@@ -126,7 +127,7 @@ class SingleLineEngineStartFromCenterSwitch(HorizontalGroup):
     def on_mount(self) -> None:
         self.watch(
             self.app.settings.typer.single_line_engine,
-            "_start_from_center",
+            CONST.SLE_START_FROM_CENTER_KEY,
             self._on_sle_start_from_center_changed,
             init=False,
         )
@@ -157,7 +158,7 @@ class StandardEngineWidth(HorizontalGroup):
     def on_mount(self) -> None:
         self.watch(
             self.app.settings.typer.standard_engine,
-            "_width",
+            CONST.WIDTH_KEY,
             self._on_se_width_changed,
             init=False,
         )
@@ -188,7 +189,7 @@ class StandardEngineHeight(HorizontalGroup):
     def on_mount(self) -> None:
         self.watch(
             self.app.settings.typer.standard_engine,
-            "_height",
+            CONST.HEIGHT_KEY,
             self._on_se_height_changed,
             init=False,
         )
@@ -209,7 +210,7 @@ class SingleLineEngineSettingsContainer(VerticalGroup):
 
     def on_mount(self) -> None:
         self.watch(
-            self.app.settings.typer, "_engine", self._toggle_container_visibility
+            self.app.settings.typer, CONST.ENGINE_KEY, self._toggle_container_visibility
         )
 
     def _toggle_container_visibility(self, typer_engine: TyperEngine) -> None:
@@ -230,7 +231,7 @@ class StandardEngineSettingsContainer(VerticalGroup):
 
     def on_mount(self) -> None:
         self.watch(
-            self.app.settings.typer, "_engine", self._toggle_container_visibility
+            self.app.settings.typer, CONST.ENGINE_KEY, self._toggle_container_visibility
         )
 
     def _toggle_container_visibility(self, typer_engine: TyperEngine) -> None:

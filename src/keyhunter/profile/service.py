@@ -1,14 +1,11 @@
 from datetime import datetime, timedelta
 from typing import Sequence
 
+from keyhunter import const as CONST
 from keyhunter.typer.schemas import Keystroke
 
 from .schemas import TypingSessionSummary, TypingSummary
 from .storage import SQLite3Storage
-
-MILLISECONDS_MULTIPLIER = 1000
-PERCENT_SCALE_2DP = 10_000
-FLOAT_TO_INT_SCALE_2DP = 100
 
 
 class ProfileService:
@@ -68,17 +65,17 @@ class ProfileService:
         keystrokes = sorted(typing_summary, key=lambda x: x.key)
         keystrokes_summary = []
         session_summary = {
-            "total_chars": 0,
-            "correct_chars": 0,
-            "elapsed_time_ms": 0,
+            CONST.TOTAL_CHARS_KEY: 0,
+            CONST.CORRECT_CHARS_KEY: 0,
+            CONST.ELAPSED_TIME_MS_KEY: 0,
         }
 
         last_char = keystrokes[0].key
         char_summary = {
-            "char": last_char,
-            "total": 0,
-            "correct": 0,
-            "elapsed_time_ms": 0,
+            CONST.CHAR_KEY: last_char,
+            CONST.TOTAL_KEY: 0,
+            CONST.CORRECT_KEY: 0,
+            CONST.ELAPSED_TIME_MS_KEY: 0,
         }
 
         for keystroke in keystrokes:
@@ -86,44 +83,46 @@ class ProfileService:
                 keystrokes_summary.append(char_summary)
                 last_char = keystroke.key
                 char_summary = {
-                    "char": last_char,
-                    "total": 0,
-                    "correct": 0,
-                    "elapsed_time_ms": 0,
+                    CONST.CHAR_KEY: last_char,
+                    CONST.TOTAL_KEY: 0,
+                    CONST.CORRECT_KEY: 0,
+                    CONST.ELAPSED_TIME_MS_KEY: 0,
                 }
 
-            char_summary["total"] += 1
-            char_summary["correct"] += keystroke.is_matched
-            char_summary["elapsed_time_ms"] += keystroke.elapsed_time_ms
+            char_summary[CONST.TOTAL_KEY] += 1
+            char_summary[CONST.CORRECT_KEY] += keystroke.is_matched
+            char_summary[CONST.ELAPSED_TIME_MS_KEY] += keystroke.elapsed_time_ms
 
         for summary in keystrokes_summary:
-            total_chars = summary["total"]
-            correct_chars = summary["correct"]
-            elapsed_time_ms = summary["elapsed_time_ms"]
+            total_chars = summary[CONST.TOTAL_KEY]
+            correct_chars = summary[CONST.CORRECT_KEY]
+            elapsed_time_ms = summary[CONST.ELAPSED_TIME_MS_KEY]
 
-            summary["accuracy"] = self._compute_typing_accuracy(
+            summary[CONST.ACCURACY_KEY] = self._compute_typing_accuracy(
                 total_chars, correct_chars
             )
-            summary["speed"] = self._compute_typing_speed(total_chars, elapsed_time_ms)
+            summary[CONST.SPEED_KEY] = self._compute_typing_speed(
+                total_chars, elapsed_time_ms
+            )
 
-            session_summary["total_chars"] += total_chars
-            session_summary["correct_chars"] += correct_chars
-            session_summary["elapsed_time_ms"] += elapsed_time_ms
+            session_summary[CONST.TOTAL_CHARS_KEY] += total_chars
+            session_summary[CONST.CORRECT_CHARS_KEY] += correct_chars
+            session_summary[CONST.ELAPSED_TIME_MS_KEY] += elapsed_time_ms
 
-        session_total_chars = session_summary["total_chars"]
-        session_correct_chars = session_summary["correct_chars"]
-        session_elapsed_time_ms = session_summary["elapsed_time_ms"]
+        session_total_chars = session_summary[CONST.TOTAL_CHARS_KEY]
+        session_correct_chars = session_summary[CONST.CORRECT_CHARS_KEY]
+        session_elapsed_time_ms = session_summary[CONST.ELAPSED_TIME_MS_KEY]
         session_accuracy = self._compute_typing_accuracy(
             total_chars=session_total_chars,
             correct_chars=session_correct_chars,
         )
         session_speed = self._compute_typing_speed(
-            total_chars=session_summary["total_chars"],
-            elapsed_time_ms=session_summary["elapsed_time_ms"],
+            total_chars=session_summary[CONST.TOTAL_CHARS_KEY],
+            elapsed_time_ms=session_summary[CONST.ELAPSED_TIME_MS_KEY],
         )
 
-        session_summary["accuracy"] = session_accuracy
-        session_summary["speed"] = session_speed
+        session_summary[CONST.ACCURACY_KEY] = session_accuracy
+        session_summary[CONST.SPEED_KEY] = session_speed
 
         self._storage.add_session_summary(session_summary, keystrokes_summary)
 
@@ -145,16 +144,16 @@ class ProfileService:
         return (dt + delta).strftime(format)
 
     def _as_cpm(self, speed: int) -> str:
-        return f"{speed / FLOAT_TO_INT_SCALE_2DP}cpm"
+        return f"{speed / CONST.FLOAT_TO_INT_SCALE_2DP}cpm"
 
     def _as_percent(self, accuracy: int) -> str:
-        return f"{accuracy / FLOAT_TO_INT_SCALE_2DP}%"
+        return f"{accuracy / CONST.FLOAT_TO_INT_SCALE_2DP}%"
 
     def _compute_typing_accuracy(self, total_chars: int, correct_chars: int) -> int:
-        accuracy = round((correct_chars / total_chars) * PERCENT_SCALE_2DP)
+        accuracy = round((correct_chars / total_chars) * CONST.PERCENT_SCALE_2DP)
         return int(accuracy)
 
     def _compute_typing_speed(self, total_chars: int, elapsed_time_ms: int) -> int:
-        minutes = elapsed_time_ms / (60 * MILLISECONDS_MULTIPLIER)
+        minutes = elapsed_time_ms / (60 * CONST.MILLISECONDS_MULTIPLIER)
         cpm = round((total_chars / minutes) * 100)
         return int(cpm)
