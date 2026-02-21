@@ -1,4 +1,3 @@
-from textual import on
 from textual.app import App, ComposeResult
 from textual.widgets import ContentSwitcher, Footer
 
@@ -30,7 +29,7 @@ class KeyHunter(App):
         with ContentSwitcher(initial="typer"):
             yield TyperContainer(id="typer")
             yield Profile(id="profile")
-            yield SettingsContainer(settings=self.settings, id="settings")
+            yield SettingsContainer(id="settings")
 
         yield Footer(show_command_palette=False)
 
@@ -38,7 +37,8 @@ class KeyHunter(App):
         switcher = self.query_one(ContentSwitcher)
 
         switcher.current = widget_name
-        self.query_one(f"#{widget_name}").focus()
+
+        self.screen.focus_next()
 
     def on_mount(self) -> None:
         self.watch(self.settings, CONST.THEME_KEY, self._on_theme_changed)
@@ -46,13 +46,11 @@ class KeyHunter(App):
     def _on_theme_changed(self, theme: str) -> None:
         self.theme = theme
 
-    @on(SettingChanged)
-    def on_setting_changed(self, m):
-        self.settings_service.update(m.command)
+    def on_setting_changed(self, event: SettingChanged) -> None:
+        self.settings_service.update(event.command)
 
-    @on(Typer.TypingCompleted)
-    async def update_typing_statistic(self, message: Typer.TypingCompleted) -> None:
-        await self.query_one(Profile).update_last_typing_result(message.typing_summary)
+    async def on_typer_typing_completed(self, event: Typer.TypingCompleted) -> None:
+        await self.query_one(Profile).update_last_typing_result(event.typing_summary)
         self.action_switch_widget("profile")
 
 

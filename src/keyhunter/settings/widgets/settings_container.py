@@ -1,9 +1,10 @@
+from typing import TYPE_CHECKING
+
 from textual.app import ComposeResult
 from textual.containers import Center, VerticalScroll
 from textual.events import DescendantFocus
 from textual.reactive import reactive
 
-from keyhunter.settings.schemas import AppSettings
 from keyhunter.settings.widgets.app_settings import AppSettingsContainer
 from keyhunter.settings.widgets.content_settings import ContentSettingsContainer
 from keyhunter.settings.widgets.typer_settings import (
@@ -13,20 +14,20 @@ from keyhunter.settings.widgets.typer_settings import (
 )
 from keyhunter.typer.simulator import TyperSimulator
 
+if TYPE_CHECKING:
+    from keyhunter.main import KeyHunter
+
 
 class SettingsContainer(VerticalScroll, can_focus=True):
+    app: "KeyHunter"
     _is_active: reactive[bool] = reactive(False, init=False)
     _last_focused = None
-
-    def __init__(self, settings: AppSettings, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self._settings = settings
 
     def compose(self) -> ComposeResult:
         yield AppSettingsContainer(classes="settings-group-container")
         yield TyperSettingsContainer(classes="settings-group-container")
 
-        typer = TyperSimulator(self._settings)
+        typer = TyperSimulator(self.app.settings)
         typer.simulate(pause=False)
         with Center():
             yield typer

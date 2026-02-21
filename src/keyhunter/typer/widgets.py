@@ -1,7 +1,7 @@
 from time import perf_counter
 from typing import TYPE_CHECKING, Sequence
 
-from textual import events, on
+from textual import events
 from textual.app import ComposeResult
 from textual.containers import CenterMiddle
 from textual.message import Message
@@ -207,12 +207,8 @@ class Typer(Widget, can_focus=True):
         return self.engine.build_line(y)
 
 
-class TyperContainer(CenterMiddle, can_focus=True):
+class TyperContainer(CenterMiddle):
     app: "KeyHunter"
 
     def compose(self) -> ComposeResult:
         yield Typer(settings=self.app.settings)
-
-    @on(events.Focus)
-    def handle_focus(self) -> None:
-        self.query_one(Typer).focus()
