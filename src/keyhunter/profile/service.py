@@ -92,6 +92,9 @@ class ProfileService:
             char_summary[CONST.TOTAL_KEY] += 1
             char_summary[CONST.CORRECT_KEY] += keystroke.is_matched
             char_summary[CONST.ELAPSED_TIME_MS_KEY] += keystroke.elapsed_time_ms
+        else:
+            if char_summary[CONST.TOTAL_KEY] > 0:
+                keystrokes_summary.append(char_summary)
 
         for summary in keystrokes_summary:
             total_chars = summary[CONST.TOTAL_KEY]
