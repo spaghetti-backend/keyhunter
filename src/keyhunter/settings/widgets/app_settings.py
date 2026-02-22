@@ -19,7 +19,9 @@ class ThemeSelector(HorizontalGroup):
     def compose(self) -> ComposeResult:
         current_theme = self.app.settings.theme
         available_themes = [
-            theme for theme in self.app.available_themes if theme != "textual-ansi"
+            theme_name
+            for theme_name, theme in self.app.available_themes.items()
+            if theme.dark and theme.name != "textual-ansi"
         ]
         with self.prevent(Select.Changed):
             yield SelectSetting(

@@ -1,4 +1,7 @@
+from typing import ClassVar
+
 from textual.app import App, ComposeResult
+from textual.binding import Binding, BindingType
 from textual.widgets import ContentSwitcher, Footer
 
 from keyhunter import const as CONST
@@ -13,10 +16,10 @@ from keyhunter.typer.widgets import Typer, TyperContainer
 
 class KeyHunter(App):
     CSS_PATH = "style.tcss"
-    BINDINGS = [
-        ("t", "switch_widget('typer')", "Typing"),
-        ("s", "switch_widget('settings')", "Settings"),
-        ("p", "switch_widget('profile')", "Profile"),
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("ctrl+t", "switch_widget('typer')", "Typing"),
+        Binding("ctrl+s", "switch_widget('settings')", "Settings"),
+        Binding("ctrl+p", "switch_widget('profile')", "Profile", priority=True),
     ]
 
     def __init__(self) -> None:
@@ -34,9 +37,7 @@ class KeyHunter(App):
         yield Footer(show_command_palette=False)
 
     def action_switch_widget(self, widget_name: str) -> None:
-        switcher = self.query_one(ContentSwitcher)
-
-        switcher.current = widget_name
+        self.query_one(ContentSwitcher).current = widget_name
 
         self.screen.focus_next()
 

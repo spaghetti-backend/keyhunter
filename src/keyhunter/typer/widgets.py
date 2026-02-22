@@ -43,7 +43,6 @@ class Typer(Widget, can_focus=True):
         self._session_start_time_ms = 0
         self._keystroke_start_time_ms = 0
         self._keystrokes = []
-        self.styles.border = (settings.typer.border.value, self.styles.base.color)
 
         self._set_engine(settings)
 
@@ -74,9 +73,7 @@ class Typer(Widget, can_focus=True):
         self.watch(
             settings.typer, CONST.ENGINE_KEY, self._on_engine_changed, init=False
         )
-        self.watch(
-            settings.typer, CONST.BORDER_KEY, self._on_border_changed, init=False
-        )
+        self.watch(settings.typer, CONST.BORDER_KEY, self._on_border_changed)
 
         sle_settings = settings.typer.single_line_engine
         self.watch(
@@ -118,7 +115,7 @@ class Typer(Widget, can_focus=True):
         self.engine.set_theme(self.app.available_themes[theme])
 
     def _on_border_changed(self, border: TyperBorder) -> None:
-        self.styles.border = (border.value, self.styles.base.color)
+        self.styles.border = (border.value, self.styles.base.border_title_color)
 
     def _on_engine_changed(self) -> None:
         self._set_engine(self.app.settings)
