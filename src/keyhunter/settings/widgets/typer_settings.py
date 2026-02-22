@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from textual.app import ComposeResult
-from textual.containers import HorizontalGroup, VerticalGroup
+from textual.containers import Center, HorizontalGroup, VerticalGroup
 from textual.validation import Number
 from textual.widgets import Input, Select, Switch
 
@@ -16,6 +16,7 @@ from keyhunter.settings.commands import (
 )
 from keyhunter.settings.schemas import TyperBorder
 from keyhunter.typer.schemas import TyperEngine
+from keyhunter.typer.simulator import TyperSimulator
 
 from .components import (
     InputSetting,
@@ -202,8 +203,6 @@ class StandardEngineHeight(HorizontalGroup):
 class SingleLineEngineSettingsContainer(VerticalGroup):
     app: "KeyHunter"
 
-    BORDER_TITLE = "Single line engine"
-
     def compose(self) -> ComposeResult:
         yield SingleLineEngineWidth(classes="setting-container")
         yield SingleLineEngineStartFromCenterSwitch(classes="setting-container")
@@ -223,8 +222,6 @@ class SingleLineEngineSettingsContainer(VerticalGroup):
 class StandardEngineSettingsContainer(VerticalGroup):
     app: "KeyHunter"
 
-    BORDER_TITLE = "Standard engine"
-
     def compose(self) -> ComposeResult:
         yield StandardEngineWidth(classes="setting-container")
         yield StandardEngineHeight(classes="setting-container")
@@ -242,8 +239,24 @@ class StandardEngineSettingsContainer(VerticalGroup):
 
 
 class TyperSettingsContainer(VerticalGroup):
+    app: "KeyHunter"
+
     BORDER_TITLE = "Typer"
 
     def compose(self) -> ComposeResult:
         yield TyperEngineSelector(classes="setting-container")
         yield TyperBorderSelector(classes="setting-container")
+
+        self.typer = TyperSimulator(self.app.settings)
+        self.typer.simulate()
+        with Center():
+            yield self.typer
+
+        yield SingleLineEngineSettingsContainer()
+        yield StandardEngineSettingsContainer()
+
+    def on_show(self) -> None:
+        self.typer.resume()
+
+    def on_hide(self) -> None:
+        self.typer.pause()

@@ -2,6 +2,14 @@ Screen {
   scrollbar-size: 0 0;
 }
 
+Typer {
+  border-title-color: $panel-lighten-3;
+}
+
+TyperSimulator {
+  margin: 1 0 0 0;
+}
+
 Switch {
   padding: 0;
   border: none;
@@ -86,7 +94,8 @@ TypingSessions {
 
 .settings-group-container {
   width: auto;
-  border: hkey $panel;
+  height: 1fr;
+  border: hkey $panel-lighten-3;
   border-title-align: center;
   margin: 1 0;
 }
@@ -95,5 +104,43 @@ TypingSessions {
 SettingsContainer {
   align-horizontal: center;
   width: auto;
-  height: auto;
+  height: 1fr;
+}
+
+#sidebar {
+  dock: left;
+  width: 20;
+  height: 100%;
+  background: $panel-lighten-2;
+  padding: 5 0;
+
+  & > ListItem {
+    color: $foreground;
+    height: auto;
+    overflow: hidden hidden;
+    align-horizontal: center;
+    width: 100%;
+    padding: 1;
+
+    &.-hovered {
+      background: $panel-lighten-3;
+      color: $block-cursor-blurred-foreground;
+      text-style: $block-cursor-blurred-text-style;
+    }
+
+    &.-highlight {
+      background: $background;
+      color: $foreground;
+      text-style: $block-cursor-text-style;
+    }
+  }
+
+  &:focus {
+    background-tint: $panel-lighten-3;
+    & > ListItem.-highlight {
+      color: $foreground;
+      background: $background;
+      text-style: $block-cursor-blurred-text-style;
+    }
+  }
 }
