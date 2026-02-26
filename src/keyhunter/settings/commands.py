@@ -2,7 +2,14 @@ from abc import ABC, abstractmethod
 from typing import Any, Protocol
 
 from keyhunter import const as CONST
-from keyhunter.content.schemas import ContentLanguage, ContentType
+from keyhunter.content.schemas import (
+    CodeSampleCategory,
+    ContentType,
+    NaturalLanguage,
+    NaturalLanguageCategory,
+    ProgrammingLanguage,
+    ProgrammingLanguageCategory,
+)
 from keyhunter.settings.schemas import AppSettings
 from keyhunter.typer.schemas import TyperEngine
 
@@ -39,11 +46,17 @@ class BaseCommand(ABC):
         setattr(settings, setting_name, self._value)
 
 
+#
+# App
+#
 class SetThemeCommand(BaseCommand):
     def execute(self, settings: AppSettings) -> None:
         self._execute(settings, CONST.THEME_KEY)
 
 
+#
+# Typer
+#
 class SetTyperBorderCommand(BaseCommand):
     def execute(self, settings: AppSettings) -> None:
         from keyhunter.settings.schemas import TyperBorder
@@ -80,18 +93,64 @@ class SetStandardEngineHeightCommand(BaseCommand):
         self._execute(settings.typer.standard_engine, CONST.HEIGHT_KEY)
 
 
-class SetContentLanguageCommand(BaseCommand):
-    def execute(self, settings: AppSettings) -> None:
-        self._value = ContentLanguage(self._value)
-        self._execute(settings.content, CONST.LANGUAGE_KEY)
-
-
+#
+# Content
+#
 class SetContentTypeCommand(BaseCommand):
     def execute(self, settings: AppSettings) -> None:
         self._value = ContentType(self._value)
         self._execute(settings.content, CONST.CONTENT_TYPE_KEY)
 
 
-class SetContentLenghtCommand(BaseCommand):
+class SetNaturalLanguageCommand(BaseCommand):
     def execute(self, settings: AppSettings) -> None:
-        self._execute(settings.content, CONST.CONTENT_LENGHT_KEY)
+        self._value = NaturalLanguage(self._value)
+        self._execute(settings.content.natural_language, CONST.LANGUAGE_KEY)
+
+
+class SetNaturalLanguageCategoryCommand(BaseCommand):
+    def execute(self, settings: AppSettings) -> None:
+        self._value = NaturalLanguageCategory(self._value)
+        self._execute(settings.content.natural_language, CONST.CATEGORY_KEY)
+
+
+class SetNaturalLanguageWordsCountCommand(BaseCommand):
+    def execute(self, settings: AppSettings) -> None:
+        self._execute(
+            settings.content.natural_language.common_words, CONST.WORDS_COUNT_KEY
+        )
+
+
+class SetNaturalLanguageContentCommand(BaseCommand):
+    def execute(self, settings: AppSettings) -> None:
+        self._execute(
+            settings.content.natural_language.common_words, CONST.CONTENT_FILES_KEY
+        )
+
+
+class SetProgrammingLanguageCommand(BaseCommand):
+    def execute(self, settings: AppSettings) -> None:
+        self._value = ProgrammingLanguage(self._value)
+        self._execute(settings.content.programming_language, CONST.LANGUAGE_KEY)
+
+
+class SetProgrammingLanguageContentTypeCommand(BaseCommand):
+    def execute(self, settings: AppSettings) -> None:
+        self._value = ProgrammingLanguageCategory(self._value)
+        self._execute(settings.content.programming_language, CONST.CATEGORY_KEY)
+
+
+class SetProgrammingLanguageKeywordsCountCommand(BaseCommand):
+    def execute(self, settings: AppSettings) -> None:
+        self._execute(
+            settings.content.programming_language.keywords, CONST.KEYWORDS_COUNT_KEY
+        )
+
+
+class SetProgrammingLanguageCodeSampleCommand(BaseCommand):
+    def execute(self, settings: AppSettings) -> None:
+        self._value = CodeSampleCategory(self._value)
+        self._execute(
+            settings.content.programming_language.code_samples,
+            CONST.CODE_SAMPLE_TYPE_KEY,
+        )

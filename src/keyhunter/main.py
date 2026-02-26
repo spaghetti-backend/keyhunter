@@ -5,6 +5,7 @@ from textual.binding import Binding, BindingType
 from textual.widgets import ContentSwitcher, Footer
 
 from keyhunter import const as CONST
+from keyhunter.content.service import ContentService
 from keyhunter.profile.service import ProfileService
 from keyhunter.profile.widgets import Profile
 from keyhunter.settings.messages import SettingChanged
@@ -27,6 +28,7 @@ class KeyHunter(App):
         self.profile_service = ProfileService()
         self.settings = AppSettings()
         self.settings_service = SettingsService(self.settings)
+        self.content_service = ContentService(self.settings.content)
 
     def compose(self) -> ComposeResult:
         with ContentSwitcher(initial="typer"):

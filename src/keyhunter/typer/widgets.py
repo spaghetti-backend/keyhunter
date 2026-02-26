@@ -9,8 +9,6 @@ from textual.strip import Strip
 from textual.widget import Widget
 
 from keyhunter import const as CONST
-from keyhunter.content.schemas import ContentLanguage, ContentType
-from keyhunter.content.service import ContentService
 from keyhunter.settings.schemas import (
     AppSettings,
     TyperBorder,
@@ -38,7 +36,6 @@ class Typer(Widget, can_focus=True):
     def __init__(self, settings: AppSettings, **kwargs):
         super().__init__(**kwargs)
 
-        self.content_service = ContentService(settings.content)
         self._is_active_session = False
         self._session_start_time_ms = 0
         self._keystroke_start_time_ms = 0
@@ -92,25 +89,6 @@ class Typer(Widget, can_focus=True):
             se_settings, CONST.HEIGHT_KEY, self._on_se_height_changed, init=False
         )
 
-        self.watch(
-            settings.content,
-            CONST.LANGUAGE_KEY,
-            self._on_content_language_changed,
-            init=False,
-        )
-        self.watch(
-            settings.content,
-            CONST.CONTENT_TYPE_KEY,
-            self._on_content_type_changed,
-            init=False,
-        )
-        self.watch(
-            settings.content,
-            CONST.CONTENT_LENGHT_KEY,
-            self._on_content_lenght_changed,
-            init=False,
-        )
-
     def _on_theme_changed(self, theme: str) -> None:
         self.engine.set_theme(self.app.available_themes[theme])
 
@@ -139,15 +117,6 @@ class Typer(Widget, can_focus=True):
             self.engine.height = height
             self.styles.height = height + CONST.BORDER_EXPANSION
 
-    def _on_content_language_changed(self, content_language: ContentLanguage) -> None:
-        self.content_service.language = content_language
-
-    def _on_content_type_changed(self, content_type: ContentType) -> None:
-        self.content_service.content_type = content_type
-
-    def _on_content_lenght_changed(self, content_lenght: int) -> None:
-        self.content_service.content_lenght = content_lenght
-
     def _process_keystroke(self, event: events.Key) -> None:
         if current_char := self.engine.current_char:
             current_time = self._timer_ms
@@ -175,7 +144,7 @@ class Typer(Widget, can_focus=True):
             else:
                 self._process_keystroke(event)
         elif event.key == "space":
-            self.engine.prepare_content(self.content_service.generate())
+            self.engine.prepare_content(self.app.content_service.generate())
             self.start_typing()
         else:
             return None
@@ -199,7 +168,9 @@ class Typer(Widget, can_focus=True):
 
     def render_line(self, y: int) -> Strip:
         if not self._is_active_session:
-            return self.engine.build_placeholder(y, self.content_service.placeholder)
+            return self.engine.build_placeholder(
+                y, self.app.content_service.placeholder
+            )
 
         return self.engine.build_line(y)
 

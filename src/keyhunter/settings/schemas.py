@@ -5,7 +5,14 @@ from textual.dom import DOMNode
 from textual.reactive import reactive
 
 from keyhunter import const as CONST
-from keyhunter.content.schemas import ContentLanguage, ContentType
+from keyhunter.content.schemas import (
+    CodeSampleCategory,
+    NaturalLanguage,
+    ContentType,
+    NaturalLanguageCategory,
+    ProgrammingLanguage,
+    ProgrammingLanguageCategory,
+)
 from keyhunter.typer.schemas import TyperEngine
 
 
@@ -48,6 +55,13 @@ class BaseSettings(DOMNode):
                 setting.load(settings.get(setting_name, {}))
             else:
                 setting_type = type(setting)
+                if setting_name not in self._reactives:
+                    value = settings.get(setting_name)
+                    if value:
+                        setattr(self, setting_name, value)
+
+                    return
+
                 reactive_setting = self._reactives[setting_name]
                 setting_default = reactive_setting._default
                 value = setting_type(settings.get(setting_name, setting_default))
@@ -86,12 +100,52 @@ class TyperSettings(BaseSettings):
     standard_engine: StandardEngineSettings = StandardEngineSettings()
 
 
+class NaturalLanguageCommonWordsSettings(BaseSettings):
+    words_count: reactive[int] = reactive(CONST.WORDS_COUNT, init=False)
+    min_words_count = CONST.MIN_WORDS_COUNT
+    max_words_count = CONST.MAX_WORDS_COUNT
+    content_files: list[str] = list()
+
+
+class NaturalSimpleTextSettings(BaseSettings): ...
+
+
+class NaturalLanguageSettings(BaseSettings):
+    language: reactive[NaturalLanguage] = reactive(NaturalLanguage.EN, init=False)
+    category: reactive[NaturalLanguageCategory] = reactive(
+        NaturalLanguageCategory.COMMON, init=False
+    )
+    common_words: NaturalLanguageCommonWordsSettings = (
+        NaturalLanguageCommonWordsSettings()
+    )
+    simple_text: NaturalSimpleTextSettings = NaturalSimpleTextSettings()
+
+
+class KeywordsSettings(BaseSettings):
+    keywords_count: reactive[int] = reactive(CONST.KEYWORDS_COUNT, init=False)
+    min_keywords_count = CONST.MIN_KEYWORDS_COUNT
+    max_keywords_count = CONST.MAX_KEYWORDS_COUNT
+
+
+class CodeSamplesSettings(BaseSettings):
+    sample_type: reactive[CodeSampleCategory] = reactive(
+        CodeSampleCategory.SIMPLE, init=False
+    )
+
+
+class ProgrammingLanguageSettings(BaseSettings):
+    language: reactive = reactive(ProgrammingLanguage.PY, init=False)
+    category: reactive[ProgrammingLanguageCategory] = reactive(
+        ProgrammingLanguageCategory.KEYWORDS
+    )
+    keywords: KeywordsSettings = KeywordsSettings()
+    code_samples: CodeSamplesSettings = CodeSamplesSettings()
+
+
 class ContentSettings(BaseSettings):
-    language: reactive[ContentLanguage] = reactive(ContentLanguage.EN, init=False)
-    content_type: reactive[ContentType] = reactive(ContentType.COMMON, init=False)
-    content_lenght: reactive[int] = reactive(CONST.CONTENT_LENGHT, init=False)
-    min_content_lenght = CONST.CONTENT_MIN_LENGHT
-    max_content_lenght = CONST.CONTENT_MAX_LENGHT
+    content_type: reactive[ContentType] = reactive(ContentType.NATURAL, init=False)
+    natural_language: NaturalLanguageSettings = NaturalLanguageSettings()
+    programming_language: ProgrammingLanguageSettings = ProgrammingLanguageSettings()
 
 
 class AppSettings(BaseSettings):

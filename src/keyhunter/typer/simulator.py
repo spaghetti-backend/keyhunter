@@ -5,7 +5,7 @@ from keyhunter.typer.widgets import Typer
 
 class TyperSimulator(Typer, can_focus=False):
     def simulate(self, pause: bool = True):
-        self._test_content = self.content_service.generate()
+        self._test_content = self.app.content_service.generate()
         self._test_content_idx = 0
         self.engine.prepare_content(self._test_content)
         self._simulate_timer = self.set_interval(0.15, self._simulate_key, pause=pause)
