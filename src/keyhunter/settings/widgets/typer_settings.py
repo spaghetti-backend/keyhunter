@@ -2,8 +2,7 @@ from typing import TYPE_CHECKING
 
 from textual.app import ComposeResult
 from textual.containers import Center, HorizontalGroup, VerticalGroup
-from textual.validation import Number
-from textual.widgets import Input, Select, Switch
+from textual.widgets import Select, Switch
 
 from keyhunter import const as CONST
 from keyhunter.settings.commands import (
@@ -19,7 +18,7 @@ from keyhunter.typer.schemas import TyperEngine
 from keyhunter.typer.simulator import TyperSimulator
 
 from .components import (
-    InputSetting,
+    LinearSliderSetting,
     SelectSetting,
     SwitchSetting,
 )
@@ -86,31 +85,16 @@ class SingleLineEngineWidth(HorizontalGroup):
     app: "KeyHunter"
 
     def compose(self) -> ComposeResult:
-        sle_settings = self.app.settings.typer.single_line_engine
-        current_width = sle_settings.width
-        width_validator = Number(
-            minimum=sle_settings.min_width,
-            maximum=sle_settings.max_width,
-        )
-        yield InputSetting(
+        settings = self.app.settings.typer.single_line_engine
+        yield LinearSliderSetting(
+            positions_count=CONST.SLE_WIDTH_STEPS,
+            current_value=settings.width,
+            min_value=settings.min_width,
+            max_value=settings.max_width,
             command=SetSingleLineEngineWidthCommand,
-            id="sle_width",
+            id="sle-width",
             label="Width",
-            default=current_width,
-            validators=[width_validator],
         )
-
-    def on_mount(self) -> None:
-        self.watch(
-            self.app.settings.typer.single_line_engine,
-            CONST.WIDTH_KEY,
-            self._on_sle_width_changed,
-            init=False,
-        )
-
-    def _on_sle_width_changed(self, width: int) -> None:
-        with self.prevent(Input.Changed):
-            self.query_one(Input).value = str(width)
 
 
 class SingleLineEngineStartFromCenterSwitch(HorizontalGroup):
@@ -142,62 +126,32 @@ class StandardEngineWidth(HorizontalGroup):
     app: "KeyHunter"
 
     def compose(self) -> ComposeResult:
-        se_settings = self.app.settings.typer.standard_engine
-        current_width = se_settings.width
-        width_validator = Number(
-            minimum=se_settings.min_width,
-            maximum=se_settings.max_width,
-        )
-        yield InputSetting(
+        settings = self.app.settings.typer.standard_engine
+        yield LinearSliderSetting(
+            positions_count=CONST.SE_WIDTH_STEPS,
+            current_value=settings.width,
+            min_value=settings.min_width,
+            max_value=settings.max_width,
             command=SetStandardEngineWidthCommand,
-            id="se_width",
+            id="se-width",
             label="Width",
-            default=current_width,
-            validators=[width_validator],
         )
-
-    def on_mount(self) -> None:
-        self.watch(
-            self.app.settings.typer.standard_engine,
-            CONST.WIDTH_KEY,
-            self._on_se_width_changed,
-            init=False,
-        )
-
-    def _on_se_width_changed(self, width: int) -> None:
-        with self.prevent(Input.Changed):
-            self.query_one(Input).value = str(width)
 
 
 class StandardEngineHeight(HorizontalGroup):
     app: "KeyHunter"
 
     def compose(self) -> ComposeResult:
-        se_settings = self.app.settings.typer.standard_engine
-        current_height = se_settings.height
-        height_validator = Number(
-            minimum=se_settings.min_height,
-            maximum=se_settings.max_height,
-        )
-        yield InputSetting(
+        settings = self.app.settings.typer.standard_engine
+        yield LinearSliderSetting(
+            positions_count=CONST.SE_HEIGHT_STEPS,
+            current_value=settings.height,
+            min_value=settings.min_height,
+            max_value=settings.max_height,
             command=SetStandardEngineHeightCommand,
-            id="se_height",
+            id="se-height",
             label="Height",
-            default=current_height,
-            validators=[height_validator],
         )
-
-    def on_mount(self) -> None:
-        self.watch(
-            self.app.settings.typer.standard_engine,
-            CONST.HEIGHT_KEY,
-            self._on_se_height_changed,
-            init=False,
-        )
-
-    def _on_se_height_changed(self, height: int) -> None:
-        with self.prevent(Input.Changed):
-            self.query_one(Input).value = str(height)
 
 
 class SingleLineEngineSettingsContainer(VerticalGroup):
@@ -247,13 +201,13 @@ class TyperSettingsContainer(VerticalGroup):
         yield TyperEngineSelector(classes="setting-container")
         yield TyperBorderSelector(classes="setting-container")
 
+        yield SingleLineEngineSettingsContainer()
+        yield StandardEngineSettingsContainer()
+
         self.typer = TyperSimulator(self.app.settings)
         self.typer.simulate()
         with Center():
             yield self.typer
-
-        yield SingleLineEngineSettingsContainer()
-        yield StandardEngineSettingsContainer()
 
     def on_show(self) -> None:
         self.typer.resume()

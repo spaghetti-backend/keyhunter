@@ -8,14 +8,17 @@ APP_NAME: Final = "keyhunter"
 TYPING_SESSIONS_STORAGE_NAME: Final = "stat.db"
 SETTINGS_STORAGE_NAME: Final = "settings.json"
 DATASETS_STORAGE_PATH: Final = "keyhunter.content.datasets"
-SIMPLE_FILENAME: Final = "simple.txt"
-COMMON_WORDS_FILENAME: Final = "common_1000.txt"
+NATURAL_LANGUAGE_KEY: Final = "natural_language"
+PROGRAMMING_LANGUAGE_KEY: Final = "programming_language"
+SIMPLE_FILENAME: Final = "simple_text/simple"
+COMMON_WORDS_DIR: Final = "common_words"
 
 THEME: Final = "nord"
 
 SLE_WIDTH: Final = 70
 SLE_MIN_WIDTH: Final = 50
 SLE_MAX_WIDTH: Final = 120
+SLE_WIDTH_STEPS: Final = 8
 SLE_HEIGHT: Final = 1
 SLE_MIN_HEIGHT: Final = 1
 SLE_MAX_HEIGHT: Final = 1
@@ -24,14 +27,19 @@ SLE_START_FROM_CENTER: Final = True
 SE_WIDTH: Final = 70
 SE_MIN_WIDTH: Final = 50
 SE_MAX_WIDTH: Final = 120
+SE_WIDTH_STEPS: Final = 8
 SE_HEIGHT: Final = 5
 SE_MIN_HEIGHT: Final = 3
 SE_MAX_HEIGHT: Final = 9
+SE_HEIGHT_STEPS: Final = 4
 
-CONTENT_LENGHT: Final = 50
-CONTENT_MIN_LENGHT: Final = 20
-CONTENT_MAX_LENGHT: Final = 1000
+WORDS_COUNT: Final = 50
+MIN_WORDS_COUNT: Final = 20
+MAX_WORDS_COUNT: Final = 100
 
+KEYWORDS_COUNT: Final = 50
+MIN_KEYWORDS_COUNT: Final = 20
+MAX_KEYWORDS_COUNT: Final = 1000
 #
 # Field keys
 #
@@ -56,7 +64,16 @@ MAX_HEIGHT_KEY: Final = "max_height"
 SLE_START_FROM_CENTER_KEY: Final = "start_from_center"
 
 CONTENT_TYPE_KEY: Final = "content_type"
-CONTENT_LENGHT_KEY: Final = "content_lenght"
+CATEGORY_KEY: Final = "category"
+CONTENT_FILES_KEY: Final = "content_files"
+WORDS_COUNT_KEY: Final = "words_count"
+WORDS_MIN_COUNT_KEY: Final = "min_words_count"
+WORDS_MAX_COUNT_KEY: Final = "max_words_count"
+KEYWORDS_COUNT_KEY: Final = "keywords_count"
+KEYWORDS_MIN_COUNT_KEY: Final = "min_keywords_count"
+KEYWORDS_MAX_COUNT_KEY: Final = "max_keywords_count"
+# CONTENT_LENGHT_KEY: Final = "content_lenght"  #
+CODE_SAMPLE_TYPE_KEY: Final = "sample_type"
 
 CHAR_KEY: Final = "char"
 TOTAL_KEY: Final = "total"
