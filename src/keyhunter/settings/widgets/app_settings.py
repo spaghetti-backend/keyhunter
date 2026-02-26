@@ -5,7 +5,6 @@ from textual.containers import HorizontalGroup, VerticalGroup
 from textual.widgets import Select
 
 from keyhunter import const as CONST
-from keyhunter.settings.commands import SetThemeCommand
 
 from .components import SelectSetting
 
@@ -25,11 +24,12 @@ class ThemeSelector(HorizontalGroup):
         ]
         with self.prevent(Select.Changed):
             yield SelectSetting(
-                command=SetThemeCommand,
                 id="theme",
                 label="Theme",
                 values=available_themes,
                 default=current_theme,
+                target=self.app.settings,
+                attr_name=CONST.THEME_KEY,
             )
 
     def on_mount(self) -> None:

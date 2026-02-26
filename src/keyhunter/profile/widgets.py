@@ -11,10 +11,10 @@ from textual.containers import (
 from textual.reactive import reactive
 from textual.widgets import Label, Rule
 
-from keyhunter.profile.service import ProfileService
 from keyhunter.typer.schemas import Keystroke
 
 from .schemas import TypingSessionSummary, TypingSummary
+from .service import ProfileService
 
 
 class StatItem(Container):

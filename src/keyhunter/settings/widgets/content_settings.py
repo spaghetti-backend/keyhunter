@@ -10,16 +10,10 @@ from keyhunter.content.schemas import (
     NaturalLanguage,
     NaturalLanguageCategory,
 )
-from keyhunter.settings.commands import (
-    SetContentTypeCommand,
-    SetNaturalLanguageCategoryCommand,
-    SetNaturalLanguageCommand,
-    SetNaturalLanguageContentCommand,
-    SetNaturalLanguageWordsCountCommand,
-)
+from keyhunter.settings.commands import SetSettingCommand
 from keyhunter.settings.messages import SettingChanged
 
-from .components import SelectSetting, LinearSliderSetting
+from .components import LinearSlider, LinearSliderSetting, SelectSetting
 
 if TYPE_CHECKING:
     from keyhunter.main import KeyHunter
@@ -33,11 +27,13 @@ class ContentTypeSelector(HorizontalGroup):
         available_content_types = [ct.value for ct in ContentType]
         with self.prevent(Select.Changed):
             yield SelectSetting(
-                command=SetContentTypeCommand,
                 id="content-type",
                 label="Content type",
                 values=available_content_types,
                 default=content_type,
+                target=self.app.settings.content,
+                attr_name=CONST.CONTENT_TYPE_KEY,
+                cast=ContentType,
             )
 
     def on_mount(self) -> None:
@@ -61,11 +57,13 @@ class NaturalLanguageSelector(HorizontalGroup):
         available_languages = [lang.value for lang in NaturalLanguage]
         with self.prevent(Select.Changed):
             yield SelectSetting(
-                command=SetNaturalLanguageCommand,
                 id="natural-language",
                 label="Language",
                 values=available_languages,
                 default=language,
+                target=self.app.settings.content.natural_language,
+                attr_name=CONST.LANGUAGE_KEY,
+                cast=NaturalLanguage,
             )
 
     def on_mount(self) -> None:
@@ -89,11 +87,13 @@ class NaturalLanguageCategorySelector(HorizontalGroup):
         available_categories = [c.value for c in NaturalLanguageCategory]
         with self.prevent(Select.Changed):
             yield SelectSetting(
-                command=SetNaturalLanguageCategoryCommand,
                 id="natural-language-category",
                 label="Category",
                 values=available_categories,
                 default=category,
+                target=self.app.settings.content.natural_language,
+                attr_name=CONST.CATEGORY_KEY,
+                cast=NaturalLanguageCategory,
             )
 
     def on_mount(self) -> None:
@@ -110,13 +110,14 @@ class NaturalLanguageCategorySelector(HorizontalGroup):
 
 
 class CommonWordsContent(HorizontalGroup):
+    # TODO: Add watcher
     app: "KeyHunter"
 
     def compose(self) -> ComposeResult:
         content_files = self.app.content_service.category_files(
-            "natural_language",
+            CONST.NATURAL_LANGUAGE_KEY,
             self.app.settings.content.natural_language.language.name.lower(),
-            "common_words",
+            CONST.COMMON_WORDS_DIR,
         )
         selected = self.app.settings.content.natural_language.common_words.content_files
         selections = [
@@ -134,7 +135,11 @@ class CommonWordsContent(HorizontalGroup):
         else:
             self.post_message(
                 SettingChanged(
-                    command=SetNaturalLanguageContentCommand(event.control.selected)
+                    command=SetSettingCommand(
+                        target=self.app.settings.content.natural_language.common_words,
+                        attr_name=CONST.CONTENT_FILES_KEY,
+                        value=event.control.selected,
+                    )
                 )
             )
 
@@ -149,10 +154,23 @@ class CommonWordsCountContainer(HorizontalGroup):
             current_value=settings.words_count,
             min_value=settings.min_words_count,
             max_value=settings.max_words_count,
-            command=SetNaturalLanguageWordsCountCommand,
             id="common-words-count-setting",
             label="Words in session",
+            target=self.app.settings.content.natural_language.common_words,
+            attr_name=CONST.WORDS_COUNT_KEY,
         )
+
+    def on_mount(self) -> None:
+        self.watch(
+            self.app.settings.content.natural_language.common_words,
+            CONST.WORDS_COUNT_KEY,
+            self._on_common_words_count_changed,
+            init=False,
+        )
+
+    def _on_common_words_count_changed(self, words_count: int) -> None:
+        with self.prevent(LinearSlider.Changed):
+            self.query_one(LinearSlider).set_value(words_count)
 
 
 class CommonWordsSettingsContainer(VerticalGroup):

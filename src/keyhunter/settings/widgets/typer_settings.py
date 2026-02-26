@@ -5,19 +5,12 @@ from textual.containers import Center, HorizontalGroup, VerticalGroup
 from textual.widgets import Select, Switch
 
 from keyhunter import const as CONST
-from keyhunter.settings.commands import (
-    SetSingleLineEngineStartFromCenterCommand,
-    SetSingleLineEngineWidthCommand,
-    SetStandardEngineHeightCommand,
-    SetStandardEngineWidthCommand,
-    SetTyperBorderCommand,
-    SetTyperEngineCommand,
-)
 from keyhunter.settings.schemas import TyperBorder
 from keyhunter.typer.schemas import TyperEngine
 from keyhunter.typer.simulator import TyperSimulator
 
 from .components import (
+    LinearSlider,
     LinearSliderSetting,
     SelectSetting,
     SwitchSetting,
@@ -34,11 +27,13 @@ class TyperEngineSelector(HorizontalGroup):
         current_engine = self.app.settings.typer.engine
         available_engines = [engine.value for engine in TyperEngine]
         yield SelectSetting(
-            command=SetTyperEngineCommand,
             id="typer_engine",
             label="Typer engine",
             values=available_engines,
             default=current_engine,
+            target=self.app.settings.typer,
+            attr_name=CONST.ENGINE_KEY,
+            cast=TyperEngine,
         )
 
     def on_mount(self) -> None:
@@ -61,11 +56,13 @@ class TyperBorderSelector(HorizontalGroup):
         current_border = self.app.settings.typer.border
         available_borders = [border.value for border in TyperBorder]
         yield SelectSetting(
-            command=SetTyperBorderCommand,
             id="typer_border",
             label="Border",
             values=available_borders,
             default=current_border,
+            target=self.app.settings.typer,
+            attr_name=CONST.BORDER_KEY,
+            cast=TyperBorder,
         )
 
     def on_mount(self) -> None:
@@ -91,10 +88,23 @@ class SingleLineEngineWidth(HorizontalGroup):
             current_value=settings.width,
             min_value=settings.min_width,
             max_value=settings.max_width,
-            command=SetSingleLineEngineWidthCommand,
             id="sle-width",
             label="Width",
+            target=self.app.settings.typer.single_line_engine,
+            attr_name=CONST.WIDTH_KEY,
         )
+
+    def on_mount(self) -> None:
+        self.watch(
+            self.app.settings.typer.single_line_engine,
+            CONST.WIDTH_KEY,
+            self._on_single_line_engine_width_changed,
+            init=False,
+        )
+
+    def _on_single_line_engine_width_changed(self, width: int) -> None:
+        with self.prevent(LinearSlider.Changed):
+            self.query_one(LinearSlider).set_value(width)
 
 
 class SingleLineEngineStartFromCenterSwitch(HorizontalGroup):
@@ -103,10 +113,11 @@ class SingleLineEngineStartFromCenterSwitch(HorizontalGroup):
     def compose(self) -> ComposeResult:
         current_choice = self.app.settings.typer.single_line_engine.start_from_center
         yield SwitchSetting(
-            command=SetSingleLineEngineStartFromCenterCommand,
             id="sle_start_from_center",
             label="Start from center",
             default=current_choice,
+            target=self.app.settings.typer.single_line_engine,
+            attr_name=CONST.SLE_START_FROM_CENTER_KEY,
         )
 
     def on_mount(self) -> None:
@@ -132,10 +143,23 @@ class StandardEngineWidth(HorizontalGroup):
             current_value=settings.width,
             min_value=settings.min_width,
             max_value=settings.max_width,
-            command=SetStandardEngineWidthCommand,
             id="se-width",
             label="Width",
+            target=self.app.settings.typer.standard_engine,
+            attr_name=CONST.WIDTH_KEY,
         )
+
+    def on_mount(self) -> None:
+        self.watch(
+            self.app.settings.typer.standard_engine,
+            CONST.WIDTH_KEY,
+            self._on_standard_engine_width_changed,
+            init=False,
+        )
+
+    def _on_standard_engine_width_changed(self, width: int) -> None:
+        with self.prevent(LinearSlider.Changed):
+            self.query_one(LinearSlider).set_value(width)
 
 
 class StandardEngineHeight(HorizontalGroup):
@@ -148,10 +172,23 @@ class StandardEngineHeight(HorizontalGroup):
             current_value=settings.height,
             min_value=settings.min_height,
             max_value=settings.max_height,
-            command=SetStandardEngineHeightCommand,
             id="se-height",
             label="Height",
+            target=self.app.settings.typer.standard_engine,
+            attr_name=CONST.HEIGHT_KEY,
         )
+
+    def on_mount(self) -> None:
+        self.watch(
+            self.app.settings.typer.standard_engine,
+            CONST.HEIGHT_KEY,
+            self._on_standard_engine_height_changed,
+            init=False,
+        )
+
+    def _on_standard_engine_height_changed(self, height: int) -> None:
+        with self.prevent(LinearSlider.Changed):
+            self.query_one(LinearSlider).set_value(height)
 
 
 class SingleLineEngineSettingsContainer(VerticalGroup):

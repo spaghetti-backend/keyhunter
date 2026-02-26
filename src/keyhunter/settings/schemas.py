@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Any
 
 from textual.dom import DOMNode
@@ -7,26 +6,13 @@ from textual.reactive import reactive
 from keyhunter import const as CONST
 from keyhunter.content.schemas import (
     CodeSampleCategory,
-    NaturalLanguage,
     ContentType,
+    NaturalLanguage,
     NaturalLanguageCategory,
     ProgrammingLanguage,
     ProgrammingLanguageCategory,
 )
-from keyhunter.typer.schemas import TyperEngine
-
-
-class TyperBorder(str, Enum):
-    BLANK = "blank"
-    ROUND = "round"
-    SOLID = "solid"
-    THICK = "thick"
-    DOUBLE = "double"
-    HEAVY = "heavy"
-    HKEY = "hkey"
-    TALL = "tall"
-    WIDE = "wide"
-
+from keyhunter.typer.schemas import TyperBorder, TyperEngine
 
 SettingsDict = dict[str, Any]
 
@@ -48,24 +34,24 @@ class BaseSettings(DOMNode):
 
         return settings
 
-    def load(self, settings: SettingsDict, r: bool = True) -> None:
+    def load(self, settings: SettingsDict, set_reactive: bool = True) -> None:
         for setting_name in self.__annotations__:
             setting = getattr(self, setting_name)
             if isinstance(setting, BaseSettings):
-                setting.load(settings.get(setting_name, {}))
+                setting.load(settings.get(setting_name, {}), set_reactive=set_reactive)
             else:
                 setting_type = type(setting)
                 if setting_name not in self._reactives:
                     value = settings.get(setting_name)
-                    if value:
+                    if value is not None:
                         setattr(self, setting_name, value)
 
-                    return
+                    continue
 
                 reactive_setting = self._reactives[setting_name]
                 setting_default = reactive_setting._default
                 value = setting_type(settings.get(setting_name, setting_default))
-                if r:
+                if set_reactive:
                     self.set_reactive(reactive_setting, value)
                 else:
                     setattr(self, setting_name, value)

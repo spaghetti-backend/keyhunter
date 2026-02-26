@@ -1,4 +1,4 @@
-from typing import ClassVar, Literal
+from typing import Any, Callable, ClassVar, Literal
 
 from rich.style import Style
 from textual import on
@@ -13,8 +13,9 @@ from textual.widgets import Input, Label, ProgressBar, Select, Switch
 from textual.widgets._progress_bar import Bar
 from textual.widgets._select import SelectOverlay
 
-from keyhunter.settings.commands import SettingChangeCommand
+from keyhunter.settings.commands import SetSettingCommand
 from keyhunter.settings.messages import SettingChanged
+from keyhunter.settings.schemas import BaseSettings
 
 
 class VimSelect(Select):
@@ -44,19 +45,23 @@ class VimSelect(Select):
 class SelectSetting(HorizontalGroup):
     def __init__(
         self,
-        command: type[SettingChangeCommand],
         id: str,
+        target: BaseSettings,
+        attr_name: str,
         label: str,
         values: list[str],
         default: str | None = None,
         allow_blank: bool = False,
+        cast: Callable[[Any], Any] | None = None,
     ) -> None:
         super().__init__(id=id, classes="setting-row")
-        self.command = command
         self.label = label
         self.values = values
         self.default = default
         self.allow_blank = allow_blank
+        self._target = target
+        self._attr_name = attr_name
+        self._cast = cast
 
     def compose(self) -> ComposeResult:
         yield Label(self.label, classes="setting-label")
@@ -74,7 +79,12 @@ class SelectSetting(HorizontalGroup):
 
         self.post_message(
             SettingChanged(
-                command=self.command(event.value),
+                command=SetSettingCommand(
+                    target=self._target,
+                    attr_name=self._attr_name,
+                    value=event.value,
+                    cast=self._cast,
+                ),
             )
         )
 
@@ -82,18 +92,22 @@ class SelectSetting(HorizontalGroup):
 class InputSetting(HorizontalGroup):
     def __init__(
         self,
-        command: type[SettingChangeCommand],
         id: str,
+        target: BaseSettings,
+        attr_name: str,
         label: str,
         default: str | int | float,
         validators: list[Validator],
+        cast: Callable[[Any], Any] | None = None,
     ) -> None:
         super().__init__(id=id, classes="setting-row")
-        self.command = command
         self.label = label
         self.default = default
         self.validators = validators
         self._current_value = str(default)
+        self._target = target
+        self._attr_name = attr_name
+        self._cast = cast
 
     def compose(self) -> ComposeResult:
         yield Label(content=self.label, classes="setting-label")
@@ -143,7 +157,12 @@ class InputSetting(HorizontalGroup):
         if event.validation_result and event.validation_result.is_valid:
             self.post_message(
                 SettingChanged(
-                    command=self.command(self._convert_to_default_type(new_value)),
+                    command=SetSettingCommand(
+                        target=self._target,
+                        attr_name=self._attr_name,
+                        value=self._convert_to_default_type(new_value),
+                        cast=self._cast,
+                    ),
                 )
             )
             self._current_value = new_value
@@ -152,15 +171,19 @@ class InputSetting(HorizontalGroup):
 class SwitchSetting(HorizontalGroup):
     def __init__(
         self,
-        command: type[SettingChangeCommand],
         id: str,
+        target: BaseSettings,
+        attr_name: str,
         label: str,
         default: bool,
+        cast: Callable[[Any], Any] | None = None,
     ) -> None:
         super().__init__(id=id, classes="setting-row")
-        self.command = command
         self.label = label
         self.default = default
+        self._target = target
+        self._attr_name = attr_name
+        self._cast = cast
 
     def compose(self) -> ComposeResult:
         yield Label(content=self.label, classes="setting-label")
@@ -173,7 +196,12 @@ class SwitchSetting(HorizontalGroup):
         event.stop()
         self.post_message(
             SettingChanged(
-                command=self.command(event.value),
+                command=SetSettingCommand(
+                    target=self._target,
+                    attr_name=self._attr_name,
+                    value=event.value,
+                    cast=self._cast,
+                ),
             )
         )
 
@@ -247,6 +275,9 @@ class LinearSlider(ProgressBar, can_focus=True):
             classes=classes,
             gradient=gradient,
         )
+        if positions_count < 3:
+            raise ValueError("Minimum three positions")
+
         self._positions_count = positions_count
         self._min_value = min_value
         self._max_value = max_value
@@ -274,6 +305,14 @@ class LinearSlider(ProgressBar, can_focus=True):
             self._current_position -= 1
             self.post_message(self.Changed(self._compute_value()))
 
+    def set_value(self, value: int) -> None:
+        if value == self._compute_value():
+            return
+        self._current_position = self._compute_position(value)
+        self.update(
+            progress=self._current_position,
+        )
+
     def _compute_value(self) -> int:
         if self._current_position == 0 or self._positions_count <= 1:
             return self._min_value
@@ -288,7 +327,7 @@ class LinearSlider(ProgressBar, can_focus=True):
         elif current_value == self._max_value:
             return self._positions_count - 1
         else:
-            return int(round(current_value - self._min_value) / self._step)
+            return int(round((current_value - self._min_value) / self._step))
 
 
 class LinearSliderSetting(HorizontalGroup):
@@ -298,17 +337,21 @@ class LinearSliderSetting(HorizontalGroup):
         current_value: int,
         min_value: int,
         max_value: int,
-        command: type[SettingChangeCommand],
         id: str,
         label: str,
+        target: BaseSettings,
+        attr_name: str,
+        cast: Callable[[Any], Any] | None = None,
     ) -> None:
         super().__init__(id=id, classes="setting-row")
-        self.command = command
         self.label = label
         self.positions_count = positions_count
         self.current_value = current_value
         self._min_value = min_value
         self._max_value = max_value
+        self._target = target
+        self._attr_name = attr_name
+        self._cast = cast
 
     def compose(self) -> ComposeResult:
         yield Label(self.label, classes="setting-label")
@@ -320,4 +363,13 @@ class LinearSliderSetting(HorizontalGroup):
         )
 
     def on_linear_slider_changed(self, event: LinearSlider.Changed) -> None:
-        self.post_message(SettingChanged(self.command(event.value)))
+        self.post_message(
+            SettingChanged(
+                SetSettingCommand(
+                    target=self._target,
+                    attr_name=self._attr_name,
+                    value=event.value,
+                    cast=self._cast,
+                )
+            )
+        )
