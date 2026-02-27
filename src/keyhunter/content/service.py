@@ -67,7 +67,15 @@ class ContentService:
 
     def _natural_language_common_words(self) -> str:
         words = []
-        for filename in self.settings.natural_language.common_words.content_files:
+        content_files = self.settings.natural_language.common_words.content_files
+        if not content_files:
+            content_files = self.category_files(
+                CONST.NATURAL_LANGUAGE_KEY,
+                self.settings.natural_language.language.name.lower(),
+                CONST.COMMON_DIR,
+            )
+
+        for filename in content_files:
             text = (
                 self.content_files.joinpath(CONST.NATURAL_LANGUAGE_KEY)
                 .joinpath(self._language_dir())
@@ -90,7 +98,15 @@ class ContentService:
 
     def _programming_language_keywords(self) -> str:
         keywords = []
-        for filename in self.settings.programming_language.keywords.content_files:
+        content_files = self.settings.programming_language.keywords.content_files
+        if not content_files:
+            content_files = self.category_files(
+                CONST.PROGRAMMING_LANGUAGE_KEY,
+                self.settings.programming_language.language.name.lower(),
+                CONST.COMMON_DIR,
+            )
+
+        for filename in content_files:
             text = (
                 self.content_files.joinpath(CONST.PROGRAMMING_LANGUAGE_KEY)
                 .joinpath(self._language_dir())
