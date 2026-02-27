@@ -175,6 +175,35 @@ class CommonWordsCountContainer(HorizontalGroup):
             self.query_one(LinearSlider).set_value(words_count)
 
 
+class UppercaseWordsPercentageContainer(HorizontalGroup):
+    app: "KeyHunter"
+
+    def compose(self) -> ComposeResult:
+        settings = self.app.settings.content.natural_language.common_words
+        yield LinearSliderSetting(
+            positions_count=10,
+            current_value=settings.upper_percent,
+            min_value=settings.min_upper_percent,
+            max_value=settings.max_upper_percent,
+            id="common-words-upper-percent-setting",
+            label="Percentage of uppercase words",
+            target=self.app.settings.content.natural_language.common_words,
+            attr_name=CONST.UPPER_PERCENT_KEY,
+        )
+
+    def on_mount(self) -> None:
+        self.watch(
+            self.app.settings.content.natural_language.common_words,
+            CONST.UPPER_PERCENT_KEY,
+            self._on_common_words_upper_percent_changed,
+            init=False,
+        )
+
+    def _on_common_words_upper_percent_changed(self, upper_percent: int) -> None:
+        with self.prevent(LinearSlider.Changed):
+            self.query_one(LinearSlider).set_value(upper_percent)
+
+
 class ProgrammingLanguageSelector(HorizontalGroup):
     app: "KeyHunter"
 
@@ -331,8 +360,9 @@ class CommonWordsSettingsContainer(VerticalGroup):
     app: "KeyHunter"
 
     def compose(self) -> ComposeResult:
-        yield CommonWordsContent(classes="setting-container")
         yield CommonWordsCountContainer(classes="setting-container")
+        yield UppercaseWordsPercentageContainer(classes="setting-container")
+        yield CommonWordsContent(classes="setting-container")
 
     def on_mount(self) -> None:
         self.watch(

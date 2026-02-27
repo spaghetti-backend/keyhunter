@@ -37,6 +37,10 @@ WORDS_COUNT: Final = 50
 MIN_WORDS_COUNT: Final = 20
 MAX_WORDS_COUNT: Final = 100
 
+UPPER_PERCENT: Final = 0
+MIN_UPPER_PERCENT: Final = 0
+MAX_UPPER_PERCENT: Final = 30
+
 KEYWORDS_COUNT: Final = 50
 MIN_KEYWORDS_COUNT: Final = 20
 MAX_KEYWORDS_COUNT: Final = 100
@@ -70,6 +74,9 @@ COMMON_WORDS_KEY: Final = "common_words"
 WORDS_COUNT_KEY: Final = "words_count"
 WORDS_MIN_COUNT_KEY: Final = "min_words_count"
 WORDS_MAX_COUNT_KEY: Final = "max_words_count"
+UPPER_PERCENT_KEY: Final = "upper_percent"
+MIN_UPPER_PERCENT_KEY: Final = "min_upper_percent"
+MAX_UPPER_PERCENT_KEY: Final = "max_upper_percent"
 KEYWORDS_COUNT_KEY: Final = "keywords_count"
 KEYWORDS_MIN_COUNT_KEY: Final = "min_keywords_count"
 KEYWORDS_MAX_COUNT_KEY: Final = "max_keywords_count"

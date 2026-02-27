@@ -90,6 +90,11 @@ class NaturalLanguageCommonWordsSettings(BaseSettings):
     words_count: reactive[int] = reactive(CONST.WORDS_COUNT, init=False)
     min_words_count = CONST.MIN_WORDS_COUNT
     max_words_count = CONST.MAX_WORDS_COUNT
+
+    upper_percent: reactive[int] = reactive(CONST.UPPER_PERCENT, init=False)
+    min_upper_percent: reactive[int] = reactive(CONST.MIN_UPPER_PERCENT, init=False)
+    max_upper_percent: reactive[int] = reactive(CONST.MAX_UPPER_PERCENT, init=False)
+
     content_files: list[str] = list()
 
 

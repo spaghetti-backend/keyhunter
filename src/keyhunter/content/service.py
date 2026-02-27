@@ -66,7 +66,7 @@ class ContentService:
         return random.choice(text)
 
     def _natural_language_common_words(self) -> str:
-        words = []
+        common_words = []
         content_files = self.settings.natural_language.common_words.content_files
         if not content_files:
             content_files = self.category_files(
@@ -83,11 +83,18 @@ class ContentService:
                 .joinpath(filename)
                 .read_text()
             )
-            words.extend(text.split())
-        random.shuffle(words)
+            common_words.extend(text.split())
+        random.shuffle(common_words)
 
         words_count = self.settings.natural_language.common_words.words_count
-        return "\n".join(words[:words_count])
+        upper_percent = self.settings.natural_language.common_words.upper_percent
+
+        words = [
+            word.capitalize() if random.randint(0, 100) < upper_percent else word
+            for word in common_words[:words_count]
+        ]
+
+        return "\n".join(words)
 
     def _programming_language_text(self) -> str:
         match self.settings.programming_language.category:
