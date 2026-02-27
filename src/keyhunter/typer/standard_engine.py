@@ -8,7 +8,6 @@ from keyhunter.typer.base_engine import BaseEngine
 
 
 class StandardEngine(BaseEngine):
-    _text = ""
     _lines = []
 
     @property
@@ -75,11 +74,9 @@ class StandardEngine(BaseEngine):
             self._lines.append(line)
 
     def prepare_content(self, text: str) -> None:
-        self._text = text
-
         self._lines.clear()
 
-        words = self._text.split()
+        words = text.split("\n")
 
         self._make_lines(words, self._segmentize_word)
 

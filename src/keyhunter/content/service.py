@@ -39,7 +39,7 @@ class ContentService:
     def category_files(
         self, content_type: str, language: str, category: str
     ) -> list[str]:
-        return list(self.content_mapping[content_type][language][category].keys())
+        return sorted(self.content_mapping[content_type][language][category].keys())
 
     def generate(self) -> str:
         match self.settings.content_type:

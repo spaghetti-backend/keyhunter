@@ -51,7 +51,7 @@ class SingleLineEngine(BaseEngine):
         ]
 
     def prepare_content(self, text: str) -> None:
-        text = " ".join(text.split())
+        text = " ".join(text.split("\n"))
 
         before_chars = [
             Segment(" ", self.default_style) for _ in range(self._start_offset)
