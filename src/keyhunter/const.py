@@ -11,7 +11,7 @@ DATASETS_STORAGE_PATH: Final = "keyhunter.content.datasets"
 NATURAL_LANGUAGE_KEY: Final = "natural_language"
 PROGRAMMING_LANGUAGE_KEY: Final = "programming_language"
 SIMPLE_FILENAME: Final = "simple_text/simple"
-COMMON_WORDS_DIR: Final = "common_words"
+COMMON_DIR: Final = "common"
 
 THEME: Final = "nord"
 
@@ -39,7 +39,7 @@ MAX_WORDS_COUNT: Final = 100
 
 KEYWORDS_COUNT: Final = 50
 MIN_KEYWORDS_COUNT: Final = 20
-MAX_KEYWORDS_COUNT: Final = 1000
+MAX_KEYWORDS_COUNT: Final = 100
 #
 # Field keys
 #

@@ -111,6 +111,7 @@ class KeywordsSettings(BaseSettings):
     keywords_count: reactive[int] = reactive(CONST.KEYWORDS_COUNT, init=False)
     min_keywords_count = CONST.MIN_KEYWORDS_COUNT
     max_keywords_count = CONST.MAX_KEYWORDS_COUNT
+    content_files: list[str] = list()
 
 
 class CodeSamplesSettings(BaseSettings):
