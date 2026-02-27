@@ -5,7 +5,7 @@ from importlib.abc import Traversable
 from keyhunter import const as CONST
 from keyhunter.settings.schemas import ContentSettings
 
-from .schemas import ContentType, NaturalLanguageCategory
+from .schemas import ContentType, NaturalLanguageCategory, ProgrammingLanguageCategory
 
 
 class ContentService:
@@ -25,14 +25,16 @@ class ContentService:
 
         return rd
 
-    def content_types(self) -> list[str]:
-        return [ct.capitalize().replace("_", " ") for ct in self.content_mapping.keys()]
-
-    def languages(self, mode: str) -> list[str]:
-        return list(self.content_mapping[mode].keys())
-
-    def categories(self, mode: str, language: str) -> list[str]:
-        return list(self.content_mapping[mode][language].keys())
+    # Remove if not needed after release 1.0
+    #
+    # def content_types(self) -> list[str]:
+    #     return [ct.capitalize().replace("_", " ") for ct in self.content_mapping.keys()]
+    #
+    # def languages(self, mode: str) -> list[str]:
+    #     return list(self.content_mapping[mode].keys())
+    #
+    # def categories(self, mode: str, language: str) -> list[str]:
+    #     return list(self.content_mapping[mode][language].keys())
 
     def category_files(
         self, content_type: str, language: str, category: str
@@ -69,7 +71,7 @@ class ContentService:
             text = (
                 self.content_files.joinpath(CONST.NATURAL_LANGUAGE_KEY)
                 .joinpath(self._language_dir())
-                .joinpath(CONST.COMMON_WORDS_DIR)
+                .joinpath(CONST.COMMON_DIR)
                 .joinpath(filename)
                 .read_text()
             )
@@ -79,6 +81,35 @@ class ContentService:
         words_count = self.settings.natural_language.common_words.words_count
         return "\n".join(words[:words_count])
 
+    def _programming_language_text(self) -> str:
+        match self.settings.programming_language.category:
+            case ProgrammingLanguageCategory.KEYWORDS:
+                return self._programming_language_keywords()
+            case ProgrammingLanguageCategory.CODE:
+                return self._programming_language_code_samples()
+
+    def _programming_language_keywords(self) -> str:
+        keywords = []
+        for filename in self.settings.programming_language.keywords.content_files:
+            text = (
+                self.content_files.joinpath(CONST.PROGRAMMING_LANGUAGE_KEY)
+                .joinpath(self._language_dir())
+                .joinpath(CONST.COMMON_DIR)
+                .joinpath(filename)
+                .read_text()
+            )
+            keywords.extend(text.split())
+
+        keywords_count = self.settings.programming_language.keywords.keywords_count
+        while len(keywords) < keywords_count:
+            keywords.extend(keywords)
+
+        random.shuffle(keywords)
+        return "\n".join(random.choices(keywords, k=keywords_count))
+
+    def _programming_language_code_samples(self) -> str:
+        return "Available after adding CodeEngine"
+
     def _language_dir(self) -> str:
         match self.settings.content_type:
             case ContentType.NATURAL:
@@ -86,9 +117,6 @@ class ContentService:
             case ContentType.PRAGRAMMING:
                 settings = self.settings.programming_language
         return settings.language.name.lower()
-
-    def _programming_language_text(self) -> str:
-        return "def self class joinpath case return import in match str from"
 
     @property
     def placeholder(self) -> str:
