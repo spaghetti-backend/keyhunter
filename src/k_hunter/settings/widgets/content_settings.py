@@ -152,7 +152,7 @@ class CommonWordsCountContainer(HorizontalGroup):
     def compose(self) -> ComposeResult:
         settings = self.app.settings.content.natural_language.common_words
         yield LinearSliderSetting(
-            positions_count=10,
+            positions_count=9,
             current_value=settings.words_count,
             min_value=settings.min_words_count,
             max_value=settings.max_words_count,
@@ -181,7 +181,7 @@ class UppercaseWordsPercentageContainer(HorizontalGroup):
     def compose(self) -> ComposeResult:
         settings = self.app.settings.content.natural_language.common_words
         yield LinearSliderSetting(
-            positions_count=10,
+            positions_count=11,
             current_value=settings.upper_percent,
             min_value=settings.min_upper_percent,
             max_value=settings.max_upper_percent,
@@ -310,7 +310,7 @@ class KeywordsCountContainer(HorizontalGroup):
     def compose(self) -> ComposeResult:
         settings = self.app.settings.content.programming_language.keywords
         yield LinearSliderSetting(
-            positions_count=10,
+            positions_count=9,
             current_value=settings.keywords_count,
             min_value=settings.min_keywords_count,
             max_value=settings.max_keywords_count,
