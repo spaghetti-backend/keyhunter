@@ -4,29 +4,20 @@ from typing import Sequence
 from k_hunter import const as CONST
 from k_hunter.typer.schemas import Keystroke
 
-from .schemas import TypingSessionSummary, TypingSummary
+from .schemas import ProfileData, TypingSessionSummary, TypingSummary
 from .storage import SQLite3Storage
 
 
 class ProfileService:
 
-    def __init__(self) -> None:
+    def __init__(self, profile_data: ProfileData) -> None:
         self._storage = SQLite3Storage()
-        self._last_session_summary = self._load_last_session_summary()
-        self._today_summary = self._load_sessions_summary(today_only=True)
-        self._all_time_summary = self._load_sessions_summary(today_only=False)
-
-    @property
-    def last_session(self) -> TypingSessionSummary:
-        return self._last_session_summary
-
-    @property
-    def today(self) -> TypingSummary:
-        return self._today_summary
-
-    @property
-    def all_time(self) -> TypingSummary:
-        return self._all_time_summary
+        self._profile_data = profile_data
+        self._profile_data.last_session = self._load_last_session_summary()
+        self._profile_data.today_sessions = self._load_sessions_summary(today_only=True)
+        self._profile_data.all_time_sessions = self._load_sessions_summary(
+            today_only=False
+        )
 
     def _load_last_session_summary(self) -> TypingSessionSummary:
         try:
@@ -61,7 +52,7 @@ class ProfileService:
         except TypeError:
             return TypingSummary()
 
-    def add(self, typing_summary: Sequence[Keystroke]) -> TypingSessionSummary:
+    def add(self, typing_summary: Sequence[Keystroke]) -> None:
         keystrokes = sorted(typing_summary, key=lambda x: x.key)
         keystrokes_summary = []
         session_summary = {
@@ -129,16 +120,16 @@ class ProfileService:
 
         self._storage.add_session_summary(session_summary, keystrokes_summary)
 
-        self._last_session_summary = TypingSessionSummary(
+        self._profile_data.last_session = TypingSessionSummary(
             speed=self._as_cpm(session_speed),
             accuracy=self._as_percent(session_accuracy),
             time=self._convert_time(session_elapsed_time_ms),
         )
 
-        self._today_summary = self._load_sessions_summary(today_only=True)
-        self._all_time_summary = self._load_sessions_summary(today_only=False)
-
-        return self._last_session_summary
+        self._profile_data.today_sessions = self._load_sessions_summary(today_only=True)
+        self._profile_data.all_time_sessions = self._load_sessions_summary(
+            today_only=False
+        )
 
     def _convert_time(self, elapsed_time_ms: int) -> str:
         dt = datetime.min

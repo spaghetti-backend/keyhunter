@@ -17,7 +17,7 @@ from .components import (
 )
 
 if TYPE_CHECKING:
-    from keyhunter.main import KeyHunter
+    from k_hunter.main import KeyHunter
 
 
 class TyperEngineSelector(HorizontalGroup):

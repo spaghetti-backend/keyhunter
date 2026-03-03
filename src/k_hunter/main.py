@@ -1,11 +1,13 @@
 from typing import ClassVar
 
+from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding, BindingType
 from textual.widgets import ContentSwitcher, Footer
 
 from k_hunter import const as CONST
 from k_hunter.content.service import ContentService
+from k_hunter.profile.schemas import ProfileData
 from k_hunter.profile.service import ProfileService
 from k_hunter.profile.widgets import Profile
 from k_hunter.settings.messages import SettingChanged
@@ -25,7 +27,8 @@ class KeyHunter(App):
 
     def __init__(self) -> None:
         super().__init__()
-        self.profile_service = ProfileService()
+        self.profile_data = ProfileData()
+        self.profile_service = ProfileService(self.profile_data)
         self.settings = AppSettings()
         self.settings_service = SettingsService(self.settings)
         self.content_service = ContentService(self.settings.content)
@@ -52,9 +55,9 @@ class KeyHunter(App):
     def on_setting_changed(self, event: SettingChanged) -> None:
         self.settings_service.update(event.command)
 
-    async def on_typer_typing_completed(self, event: Typer.TypingCompleted) -> None:
-        await self.query_one(Profile).update_last_typing_result(event.typing_summary)
-        self.action_switch_widget("profile")
+    @work(thread=True)
+    def on_typer_typing_completed(self, event: Typer.TypingCompleted) -> None:
+        self.profile_service.add(event.typing_summary)
 
 
 def main():
