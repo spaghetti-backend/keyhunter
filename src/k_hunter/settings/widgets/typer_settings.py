@@ -7,7 +7,7 @@ from textual.widgets import Select, Switch
 from k_hunter import const as CONST
 from k_hunter.settings.schemas import TyperBorder
 from k_hunter.typer.schemas import TyperEngine
-from k_hunter.typer.simulator import TyperSimulator
+from k_hunter.typer.widgets import TyperSimulator
 
 from .components import (
     LinearSlider,

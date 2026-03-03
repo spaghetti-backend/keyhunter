@@ -2,8 +2,6 @@ from time import perf_counter
 from typing import TYPE_CHECKING, Sequence
 
 from textual import events
-from textual.app import ComposeResult
-from textual.containers import CenterMiddle
 from textual.message import Message
 from textual.strip import Strip
 from textual.widget import Widget
@@ -15,9 +13,9 @@ from k_hunter.settings.schemas import (
     TyperEngine,
 )
 
-from .schemas import Keystroke
-from .single_line_engine import SingleLineEngine
-from .standard_engine import StandardEngine
+from k_hunter.typer.schemas import Keystroke
+from k_hunter.typer.engines.single_line_engine import SingleLineEngine
+from k_hunter.typer.engines.standard_engine import StandardEngine
 
 if TYPE_CHECKING:
     from k_hunter.main import KeyHunter
@@ -67,9 +65,7 @@ class Typer(Widget, can_focus=True):
     def _subscribe(self) -> None:
         settings = self.app.settings
         self.watch(settings, CONST.THEME_KEY, self._on_theme_changed, init=False)
-        self.watch(
-            settings.typer, CONST.ENGINE_KEY, self._on_engine_changed, init=False
-        )
+        self.watch(settings.typer, CONST.ENGINE_KEY, self._on_engine_changed)
         self.watch(settings.typer, CONST.BORDER_KEY, self._on_border_changed)
 
         sle_settings = settings.typer.single_line_engine
@@ -173,10 +169,3 @@ class Typer(Widget, can_focus=True):
             )
 
         return self.engine.build_line(y)
-
-
-class TyperContainer(CenterMiddle):
-    app: "KeyHunter"
-
-    def compose(self) -> ComposeResult:
-        yield Typer(settings=self.app.settings)
