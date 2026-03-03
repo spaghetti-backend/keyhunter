@@ -140,7 +140,3 @@ class ContentService:
             case ContentType.PRAGRAMMING:
                 settings = self.settings.programming_language
         return settings.language.name.lower()
-
-    @property
-    def placeholder(self) -> str:
-        return "Press 'space' to start typing"

@@ -84,14 +84,6 @@ class SingleLineEngine(BaseEngine):
         )
         self._start_offset = before_center
 
-    def build_placeholder(self, y: int, text: str) -> Strip:
-        if y != 0:
-            return Strip.blank(self._width)
-
-        text = f"{text:^{self._width}}"
-
-        return Strip([Segment(char, self.default_style) for char in text])
-
     def build_line(self, y: int) -> Strip:
         if not self._chars or y != 0:
             return Strip.blank(self._width)

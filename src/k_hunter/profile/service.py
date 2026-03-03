@@ -53,6 +53,9 @@ class ProfileService:
             return TypingSummary()
 
     def add(self, typing_summary: Sequence[Keystroke]) -> None:
+        if not typing_summary:
+            return
+
         keystrokes = sorted(typing_summary, key=lambda x: x.key)
         keystrokes_summary = []
         session_summary = {

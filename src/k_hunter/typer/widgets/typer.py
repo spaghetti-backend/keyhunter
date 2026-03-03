@@ -61,11 +61,14 @@ class Typer(Widget, can_focus=True):
 
     def on_mount(self) -> None:
         self._subscribe()
+        self.engine.prepare_content(self.app.content_service.generate())
 
     def _subscribe(self) -> None:
         settings = self.app.settings
         self.watch(settings, CONST.THEME_KEY, self._on_theme_changed, init=False)
-        self.watch(settings.typer, CONST.ENGINE_KEY, self._on_engine_changed)
+        self.watch(
+            settings.typer, CONST.ENGINE_KEY, self._on_engine_changed, init=False
+        )
         self.watch(settings.typer, CONST.BORDER_KEY, self._on_border_changed)
 
         sle_settings = settings.typer.single_line_engine
@@ -140,7 +143,6 @@ class Typer(Widget, can_focus=True):
             else:
                 self._process_keystroke(event)
         elif event.key == "space":
-            self.engine.prepare_content(self.app.content_service.generate())
             self.start_typing()
         else:
             return None
@@ -159,13 +161,8 @@ class Typer(Widget, can_focus=True):
     def stop_typing(self) -> None:
         self._is_active_session = False
 
-        if self._keystrokes:
-            self.post_message(self.TypingCompleted(typing_summary=self._keystrokes))
+        self.post_message(self.TypingCompleted(typing_summary=self._keystrokes))
+        self.engine.prepare_content(self.app.content_service.generate())
 
     def render_line(self, y: int) -> Strip:
-        if not self._is_active_session:
-            return self.engine.build_placeholder(
-                y, self.app.content_service.placeholder
-            )
-
         return self.engine.build_line(y)

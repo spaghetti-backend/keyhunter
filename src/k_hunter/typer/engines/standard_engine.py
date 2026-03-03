@@ -109,14 +109,6 @@ class StandardEngine(BaseEngine):
     def _blank_strip(self) -> Strip:
         return Strip([Segment(" ", self.default_style) for _ in range(self._width)])
 
-    def build_placeholder(self, y: int, text: str) -> Strip:
-        if y != self._height // 2:
-            return self._blank_strip()
-
-        text = f"{text:^{self._width}}"
-
-        return Strip([Segment(char, self.default_style) for char in text])
-
     def build_line(self, y: int) -> Strip:
         if not self._lines or y >= self._height:
             return Strip.blank(self._width)

@@ -241,13 +241,14 @@ class TyperSettingsContainer(VerticalGroup):
         yield SingleLineEngineSettingsContainer()
         yield StandardEngineSettingsContainer()
 
-        self.typer = TyperSimulator(self.app.settings)
-        self.typer.simulate()
         with Center():
-            yield self.typer
+            yield TyperSimulator(self.app.settings)
+
+    def on_mount(self) -> None:
+        self.query_exactly_one(TyperSimulator).simulate()
 
     def on_show(self) -> None:
-        self.typer.resume()
+        self.query_exactly_one(TyperSimulator).resume()
 
     def on_hide(self) -> None:
-        self.typer.pause()
+        self.query_exactly_one(TyperSimulator).pause()
