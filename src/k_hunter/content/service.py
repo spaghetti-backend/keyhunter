@@ -45,7 +45,7 @@ class ContentService:
         match self.settings.content_type:
             case ContentType.NATURAL:
                 return self._natural_language_text()
-            case ContentType.PRAGRAMMING:
+            case ContentType.PROGRAMMING:
                 return self._programming_language_text()
 
     def _natural_language_text(self) -> str:
@@ -137,6 +137,6 @@ class ContentService:
         match self.settings.content_type:
             case ContentType.NATURAL:
                 settings = self.settings.natural_language
-            case ContentType.PRAGRAMMING:
+            case ContentType.PROGRAMMING:
                 settings = self.settings.programming_language
         return settings.language.name.lower()

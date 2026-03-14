@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from textual.app import ComposeResult
-from textual.containers import HorizontalGroup, VerticalGroup
+from textual.containers import HorizontalGroup, VerticalGroup, VerticalScroll
 from textual.widgets import Select, SelectionList
 
 from k_hunter import const as CONST
@@ -15,7 +15,12 @@ from k_hunter.content.schemas import (
 from k_hunter.settings.commands import SetSettingCommand
 from k_hunter.settings.messages import SettingChanged
 
-from .components import LinearSlider, LinearSliderSetting, SelectSetting
+from .components import (
+    LinearSlider,
+    LinearSliderSetting,
+    SelectSetting,
+    VimSelectionList,
+)
 
 if TYPE_CHECKING:
     from k_hunter.main import KeyHunter
@@ -125,9 +130,10 @@ class CommonWordsContent(HorizontalGroup):
         selections = [
             (ct, ct, True if ct in selected else False) for ct in content_files
         ]
-        sl = SelectionList(*selections)
-        sl.border_title = "Words from"
-        yield sl
+        with self.prevent(SelectionList.SelectionHighlighted):
+            sl = VimSelectionList(*selections)
+            sl.border_title = "Words from"
+            yield sl
 
     def on_selection_list_selected_changed(
         self, event: SelectionList.SelectedChanged
@@ -283,9 +289,10 @@ class CommonKeywordsContent(HorizontalGroup):
         selections = [
             (ct, ct, True if ct in selected else False) for ct in content_files
         ]
-        sl = SelectionList(*selections)
-        sl.border_title = "Words from"
-        yield sl
+        with self.prevent(SelectionList.SelectionHighlighted):
+            sl = SelectionList(*selections)
+            sl.border_title = "Words from"
+            yield sl
 
     def on_selection_list_selected_changed(
         self, event: SelectionList.SelectedChanged
@@ -394,7 +401,7 @@ class ProgrammingLanguageSettingsContainer(VerticalGroup):
         )
 
     def _toggle_container_visibility(self, content_mode: ContentType) -> None:
-        if content_mode == ContentType.PRAGRAMMING:
+        if content_mode == ContentType.PROGRAMMING:
             self.remove_class("hidden")
         else:
             self.add_class("hidden")
@@ -422,7 +429,7 @@ class NaturalLanguageSettingsContainer(VerticalGroup):
             self.add_class("hidden")
 
 
-class ContentSettingsContainer(VerticalGroup):
+class ContentSettingsContainer(VerticalScroll, can_focus=False):
     BORDER_TITLE = "Content"
 
     def compose(self) -> ComposeResult:

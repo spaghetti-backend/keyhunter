@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from textual.app import ComposeResult
-from textual.containers import HorizontalGroup, VerticalGroup
+from textual.containers import HorizontalGroup, VerticalScroll
 from textual.widgets import Select
 
 from k_hunter import const as CONST
@@ -42,7 +42,7 @@ class ThemeSelector(HorizontalGroup):
             self.query_one(Select).value = theme
 
 
-class AppSettingsContainer(VerticalGroup):
+class AppSettingsContainer(VerticalScroll, can_focus=False):
     BORDER_TITLE = "App"
 
     def compose(self) -> ComposeResult:

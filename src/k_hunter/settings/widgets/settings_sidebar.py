@@ -2,7 +2,7 @@ from textual.app import ComposeResult
 from textual.widgets import Label, ListItem, ListView
 
 
-class Sidebar(ListView):
+class Sidebar(ListView, can_focus=False):
     def compose(self) -> ComposeResult:
         yield ListItem(
             Label("App", classes="sidebar-item"), id="app-settings-container"

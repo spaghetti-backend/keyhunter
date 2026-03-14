@@ -3,7 +3,7 @@ from enum import Enum
 
 class ContentType(str, Enum):
     NATURAL = "Natural language"
-    PRAGRAMMING = "Programming language"
+    PROGRAMMING = "Programming language"
 
 
 class NaturalLanguage(str, Enum):

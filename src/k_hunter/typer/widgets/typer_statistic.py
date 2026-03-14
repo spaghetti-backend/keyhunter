@@ -16,7 +16,7 @@ class TypingStatistic(HorizontalGroup):
     last_session: reactive[TypingSessionSummary] = reactive(
         TypingSessionSummary(), recompose=True
     )
-    is_active_session: reactive[bool] = reactive(bool, init=False)
+    is_active_session: reactive[bool] = reactive(False, init=False)
 
     def compose(self) -> ComposeResult:
         yield Label(f"Speed: {self.last_session.speed}")

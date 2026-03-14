@@ -9,7 +9,7 @@ from textual.containers import HorizontalGroup
 from textual.message import Message
 from textual.renderables.bar import Bar as BarRenderable
 from textual.validation import Validator
-from textual.widgets import Input, Label, ProgressBar, Select, Switch
+from textual.widgets import Input, Label, ProgressBar, Select, SelectionList, Switch
 from textual.widgets._progress_bar import Bar
 from textual.widgets._select import SelectOverlay
 
@@ -379,3 +379,23 @@ class LinearSliderSetting(HorizontalGroup):
                 )
             )
         )
+
+
+class VimSelectionList(SelectionList):
+    BINDINGS = [
+        Binding("j,down", "cursor_down", "Down", show=False),
+        Binding("k,up", "cursor_up", "Up", show=False),
+    ]
+
+    def action_cursor_down(self) -> None:
+        if self.highlighted == len(self.options) - 1:
+            self.screen.focus_next()
+            return
+        else:
+            return super().action_cursor_down()
+
+    def action_cursor_up(self) -> None:
+        if self.highlighted == 0:
+            self.screen.focus_previous()
+        else:
+            return super().action_cursor_up()

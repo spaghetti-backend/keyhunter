@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
 
 from textual.app import ComposeResult
-from textual.containers import Center, HorizontalGroup, VerticalGroup
+from textual.containers import Center, HorizontalGroup, VerticalGroup, VerticalScroll
 from textual.widgets import Select, Switch
 
 from k_hunter import const as CONST
@@ -229,7 +229,7 @@ class StandardEngineSettingsContainer(VerticalGroup):
             self.add_class("hidden")
 
 
-class TyperSettingsContainer(VerticalGroup):
+class TyperSettingsContainer(VerticalScroll, can_focus=False):
     app: "KeyHunter"
 
     BORDER_TITLE = "Typer"
