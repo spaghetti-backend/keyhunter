@@ -36,8 +36,7 @@ Available modes:
 - Adjustable word count  
 - Customizable typing area  
 
-![TyperSettings](https://raw.githubusercontent.com/spaghetti-backend/keyhunter/main/docs/typing_settings.webp)  
-![ContentSettings](https://raw.githubusercontent.com/spaghetti-backend/keyhunter/main/docs/content_settings.webp)
+![Settings](https://raw.githubusercontent.com/spaghetti-backend/keyhunter/main/docs/settings.gif)
 
 </details>
 
@@ -95,7 +94,7 @@ Hotkeys are displayed in the bottom panel of the interface.
 
 ## Roadmap
 
-- [ ] Improved navigation
+- [x] Improved navigation
 - [ ] Advanced statistics
 - [ ] Additional languages
 - [ ] Code snippet training mode
@@ -104,4 +103,3 @@ Hotkeys are displayed in the bottom panel of the interface.
 [Textual]: https://textual.textualize.io
 [uv]: https://docs.astral.sh/uv
 [pipx]: https://github.com/pypa/pipx
-
