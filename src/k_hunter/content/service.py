@@ -1,11 +1,16 @@
 import random
+import sys
 from importlib import resources
-from importlib.abc import Traversable
 
 from k_hunter import const as CONST
 from k_hunter.settings.schemas import ContentSettings
 
 from .schemas import ContentType, NaturalLanguageCategory, ProgrammingLanguageCategory
+
+if sys.version_info >= (3, 11):
+    from importlib.resources.abc import Traversable
+else:
+    from importlib.abc import Traversable
 
 
 class ContentService:

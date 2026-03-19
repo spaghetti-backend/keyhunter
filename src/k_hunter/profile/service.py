@@ -123,15 +123,14 @@ class ProfileService:
 
         self._storage.add_session_summary(session_summary, keystrokes_summary)
 
+        self._profile_data.today_sessions = self._load_sessions_summary(today_only=True)
+        self._profile_data.all_time_sessions = self._load_sessions_summary(
+            today_only=False
+        )
         self._profile_data.last_session = TypingSessionSummary(
             speed=self._as_cpm(session_speed),
             accuracy=self._as_percent(session_accuracy),
             time=self._convert_time(session_elapsed_time_ms),
-        )
-
-        self._profile_data.today_sessions = self._load_sessions_summary(today_only=True)
-        self._profile_data.all_time_sessions = self._load_sessions_summary(
-            today_only=False
         )
 
     def _convert_time(self, elapsed_time_ms: int) -> str:

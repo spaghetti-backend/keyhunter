@@ -1,4 +1,5 @@
 from typing import Any
+import inspect
 
 from textual.dom import DOMNode
 from textual.reactive import reactive
@@ -20,12 +21,13 @@ SettingsDict = dict[str, Any]
 class BaseSettings(DOMNode):
     def __init__(self):
         super().__init__()
+        self._annotations = inspect.get_annotations(type(self))
         for base in self.__class__.__bases__:
-            self.__annotations__.update(base.__annotations__)
+            self._annotations.update(inspect.get_annotations(base))
 
     def dump(self) -> SettingsDict:
         settings = {}
-        for setting_name in self.__annotations__:
+        for setting_name in self._annotations:
             setting = getattr(self, setting_name)
             if isinstance(setting, BaseSettings):
                 settings[setting_name] = setting.dump()
@@ -35,8 +37,9 @@ class BaseSettings(DOMNode):
         return settings
 
     def load(self, settings: SettingsDict, set_reactive: bool = True) -> None:
-        for setting_name in self.__annotations__:
+        for setting_name in self._annotations:
             setting = getattr(self, setting_name)
+
             if isinstance(setting, BaseSettings):
                 setting.load(settings.get(setting_name, {}), set_reactive=set_reactive)
             else:
