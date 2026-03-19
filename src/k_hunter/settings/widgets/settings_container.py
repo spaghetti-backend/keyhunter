@@ -19,11 +19,9 @@ class SettingsContainer(VerticalScroll, can_focus=False):
 
     BINDINGS: ClassVar[list[BindingType]] = [
         Binding("ctrl+z", "undo", "Undo"),
-        Binding("ctrl+r", "restore", "Restore"),
-        Binding("ctrl+s", "save", "Save"),
         Binding("ctrl+d", "reset_to_default", "Default"),
-        Binding("j,down", "cursor_down", "Down", show=True),
-        Binding("k,up", "cursor_up", "Up", show=True),
+        Binding("j,down", "cursor_down", "Down", show=False),
+        Binding("k,up", "cursor_up", "Up", show=False),
         Binding("ctrl+f,pagedown", "page_down", "Next", priority=True, show=True),
         Binding("ctrl+b,pageup", "page_up", "Previous", priority=True, show=True),
     ]
@@ -48,14 +46,6 @@ class SettingsContainer(VerticalScroll, can_focus=False):
         self.app.settings_service.undo()
         self.refresh_bindings()
 
-    def action_restore(self) -> None:
-        self.app.settings_service.restore()
-        self.refresh_bindings()
-
-    def action_save(self) -> None:
-        self.app.settings_service.save()
-        self.refresh_bindings()
-
     def action_reset_to_default(self) -> None:
         self.app.settings_service.reset_to_default()
         self.refresh_bindings()
@@ -73,12 +63,8 @@ class SettingsContainer(VerticalScroll, can_focus=False):
         self.query_one("#sidebar", Sidebar).action_cursor_up()
 
     def check_action(self, action: str, parameters: tuple[object, ...]) -> bool | None:
-        # if not self.has_focus_within:
-        #     return False
-        if action in ("undo", "restore"):
+        if action == "undo":
             return True if self.app.settings_service.has_updates else None
-        elif action == "save":
-            return True if not self.app.settings_service.saved else None
         else:
             return True
 
@@ -87,6 +73,3 @@ class SettingsContainer(VerticalScroll, can_focus=False):
         if event.item and event.item.id:
             self.query_one(ContentSwitcher).current = event.item.id
             self.screen.focus_next()
-
-    def on_setting_changed(self) -> None:
-        self.refresh_bindings()

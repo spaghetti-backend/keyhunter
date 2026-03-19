@@ -11,7 +11,6 @@ class SettingsService:
 
         user_settings = self._storage.load()
         self._settings.load(user_settings)
-        self._saved = True
 
     @property
     def has_updates(self) -> bool:
@@ -20,33 +19,20 @@ class SettingsService:
                 return True
         return False
 
-    @property
-    def saved(self) -> bool:
-        return self._saved
-
     def update(self, command: SetSettingCommand):
         command.execute()
         self._history.append(command)
-        self._saved = False
+        self.save()
 
     def undo(self) -> None:
-        for command in reversed(self._history):
-            if command.executed:
-                command.undo()
-                self._saved = False
-                break
-
-    def restore(self) -> None:
-        for command in reversed(self._history):
-            command.undo()
-            self._saved = False
+        if self._history:
+            self._history.pop().undo()
+            self.save()
 
     def reset_to_default(self) -> None:
-        self.restore()
+        self._history.clear()
         self._settings.load({}, set_reactive=False)
-        self._saved = False
+        self.save()
 
     def save(self) -> None:
         self._storage.save(self._settings.dump())
-        self._history.clear()
-        self._saved = True

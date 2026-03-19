@@ -382,7 +382,7 @@ class LinearSliderSetting(HorizontalGroup):
 
 
 class VimSelectionList(SelectionList):
-    BINDINGS = [
+    BINDINGS: ClassVar[list[BindingType]] = [
         Binding("j,down", "cursor_down", "Down", show=False),
         Binding("k,up", "cursor_up", "Up", show=False),
     ]
