@@ -2,6 +2,24 @@ Screen {
   scrollbar-size: 0 0;
 }
 
+HelpFooter {
+  height: 1;
+  dock: bottom;
+  color: $footer-foreground;
+  background:$primary-muted;
+
+  #footer {
+    width: auto;
+  }
+  #static-keybindings {
+    width: auto;
+    dock: right;
+    & > FooterKey {
+      margin: 0 1;
+    }
+  }
+}
+
 Typer {
   margin: 1 0;
   border-title-color: $panel-lighten-3;

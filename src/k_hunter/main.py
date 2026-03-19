@@ -3,10 +3,11 @@ from typing import ClassVar
 from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding, BindingType
-from textual.widgets import ContentSwitcher, Footer
+from textual.widgets import ContentSwitcher
 
 from k_hunter import const as CONST
 from k_hunter.content.service import ContentService
+from k_hunter.help import HelpFooter, HelpScreen
 from k_hunter.profile.schemas import ProfileData
 from k_hunter.profile.service import ProfileService
 from k_hunter.profile.widgets import Profile
@@ -20,9 +21,13 @@ from k_hunter.typer.widgets import Typer, TyperContainer
 class KeyHunter(App):
     CSS_PATH = "style.tcss"
     BINDINGS: ClassVar[list[BindingType]] = [
-        Binding("ctrl+t", "switch_widget('typer')", "Typing"),
-        Binding("ctrl+s", "switch_widget('settings')", "Settings"),
-        Binding("ctrl+p", "switch_widget('profile')", "Profile", priority=True),
+        Binding("f1", "show_help", "Help", show=False),
+        Binding("ctrl+t", "switch_widget('typer')", "Typing", show=False),
+        Binding("ctrl+s", "switch_widget('settings')", "Settings", show=False),
+        Binding(
+            "ctrl+p", "switch_widget('profile')", "Profile", priority=True, show=False
+        ),
+        Binding("ctrl+o", "toggle_footer", "Toggle footer", show=False),
     ]
 
     def __init__(self) -> None:
@@ -39,12 +44,19 @@ class KeyHunter(App):
             yield Profile(id="profile")
             yield SettingsContainer(id="settings")
 
-        yield Footer(show_command_palette=False)
+        yield HelpFooter()
 
     def action_switch_widget(self, widget_name: str) -> None:
         self.query_one(ContentSwitcher).current = widget_name
 
         self.screen.focus_next()
+
+    def action_show_help(self) -> None:
+        self.push_screen(HelpScreen())
+
+    def action_toggle_footer(self) -> None:
+        help_footer = self.query_one(HelpFooter)
+        help_footer.visible = not help_footer.visible
 
     def on_mount(self) -> None:
         self.watch(self.settings, CONST.THEME_KEY, self._on_theme_changed)
