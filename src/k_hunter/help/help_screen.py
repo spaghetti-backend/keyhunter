@@ -1,11 +1,22 @@
+from typing import ClassVar
 from textual.containers import VerticalScroll
 from textual.widgets import Markdown
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
+from textual.binding import BindingType, Binding
+
+
+class HelpContainer(VerticalScroll):
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("j", "scroll_down", show=False),
+        Binding("k", "scroll_up", show=False),
+    ]
 
 
 class HelpScreen(ModalScreen[None]):
-    BINDINGS = [("escape", "close_help", "Close")]
+    BINDINGS: ClassVar[list[BindingType]] = [
+        Binding("escape", "close_help", "Close"),
+    ]
     CSS = """
     HelpScreen {
         align: center middle;
@@ -62,7 +73,7 @@ The footer can be hidden with **Ctrl + o**.
         """
 
     def compose(self) -> ComposeResult:
-        with VerticalScroll(id="help-screen-container"):
+        with HelpContainer(id="help-screen-container"):
             yield Markdown(self.HELP)
 
     def action_close_help(self):
